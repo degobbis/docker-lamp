@@ -1,0 +1,2 @@
+<?php
+$cfg['AllowUserDropDatabase'] = true;

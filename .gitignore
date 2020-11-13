@@ -1,0 +1,15 @@
+# App data.
+/data/mysql/*
+/data/www/*
+
+# Docker config files.
+/.env
+
+# Exclutions.
+!/data/www/joomla
+!/data/www/wordpress
+!/data/www/wordpress-multisite
+!/data/**/.gitkeep
+
+# IDEs
+.idea

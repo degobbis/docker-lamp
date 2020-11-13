@@ -1,0 +1,201 @@
+version: '3'
+services:
+
+  httpd:
+    image: degobbis/apache24-alpine:latest
+    container_name: httpd
+    links:
+      - mysql
+      - php56
+      - php73
+      - php74
+      - php80
+      - mailhog
+    volumes:
+      - ./.config/httpd/apache24/ca:/usr/local/apache2/ca:rw
+      - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
+      - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
+      - ./data/phpinfo:/srv/phpinfo:rw
+      - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
+      - pma:/srv/pma
+      - phpsocket:/run/php
+    ports:
+      - "80:${MAP_POT_80:-8074}"
+      - "8000:8000"
+      - "8056:8056"
+      - "8073:8073"
+      - "8074:8074"
+      - "8080:8080"
+      - "443:${MAP_POT_443:-8474}"
+      - "8400:8400"
+      - "8456:8456"
+      - "8473:8473"
+      - "8474:8474"
+      - "8480:8480"
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+    networks:
+      - lamp
+
+  php56:
+    image: degobbis/php56-fpm-alpine:latest
+    container_name: php56
+    links:
+      - mailhog
+      - mysql
+    volumes:
+      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ./.config/php/php56/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
+      - ./.config/php/php56/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
+      - ./data/phpinfo:/srv/phpinfo:rw
+      - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-production}
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    networks:
+      - lamp
+
+  php73:
+    image: degobbis/php73-fpm-alpine:latest
+    container_name: php73
+    links:
+      - mailhog
+      - mysql
+    volumes:
+      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ./.config/php/php73/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
+      - ./.config/php/php73/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
+      - ./data/phpinfo:/srv/phpinfo:rw
+      - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-development}
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    networks:
+      - lamp
+
+  php74:
+    image: degobbis/php74-fpm-alpine:latest
+    container_name: php74
+    links:
+      - mailhog
+      - mysql
+    volumes:
+      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ./.config/php/php74/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
+      - ./.config/php/php74/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
+      - ./data/phpinfo:/srv/phpinfo:rw
+      - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-development}
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    networks:
+      - lamp
+
+  php80:
+    image: degobbis/php80-fpm-alpine:latest
+    container_name: php80
+    links:
+      - mailhog
+      - mysql
+    volumes:
+      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ./.config/php/php80/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ./.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
+      - ./.config/php/php80/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
+      - ./data/phpinfo:/srv/phpinfo:rw
+      - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-development}
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    networks:
+      - lamp
+
+  mysql:
+    image: degobbis/mariadb105-alpine:latest
+    container_name: mysql
+    volumes:
+      - db-data-dir:/var/lib/mysql
+      - ./data/initDB:/docker-entrypoint-initdb.d
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+    ports:
+      - "3306:3306"
+    networks:
+      - lamp
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - lamp
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: phpmyadmin
+    links:
+      - mysql
+    volumes:
+      - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+      - pma:/var/www/html
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 128M
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
+    networks:
+      - lamp
+
+volumes:
+  pma:
+  db-data-dir:
+  phpsocket:
+
+networks:
+  lamp:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: "lamp"
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.200.0/24
+          gateway: 192.168.200.1
