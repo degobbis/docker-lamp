@@ -34,7 +34,7 @@ server-down: db-backup load-env ## Stop all docker containers and delete all vol
 
 
 db-backup: ## Stop all docker containers.
-	@docker exec -it mysql backup-databases.sh
+	@docker exec -it mysql backup-databases
 
 
 #docker-prune: ## Remove unused docker resources via 'docker system prune -a -f --volumes'
