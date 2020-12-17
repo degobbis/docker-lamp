@@ -1,9 +1,10 @@
 # App data.
-/data/mysql/*
+/data/initDB/*
 /data/www/*
 
 # Docker config files.
 /.env
+/docker-compose.override.yml
 
 # Exclutions.
 !/data/www/joomla
