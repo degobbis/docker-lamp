@@ -1,11 +1,32 @@
 version: '3'
 services:
 
+  bind:
+    image: cytopia/bind:0.15
+    hostname: bind
+    restart: always
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    environment:
+      - WILDCARD_DNS=${TLD_SUFFIX}
+      - EXTRA_HOSTS=${EXTRA_HOSTS}
+      - DNS_FORWARDER=${BIND_DNS_RESOLVER}
+    dns:
+      - 127.0.0.1
+    # MacOS and Windows have this by default, this hack also allows it for Linux
+    extra_hosts:
+      docker.for.lin.host.internal: 172.16.238.1
+      docker.for.lin.localhost: 172.16.238.1
+    networks:
+      lamp:
+        ipv4_address: 172.16.238.100
+
   httpd:
     image: degobbis/apache24-alpine:latest
-    container_name: httpd
+    hostname: httpd
     links:
-      - mysql
+      - bind
       - php56
       - php73
       - php74
@@ -37,13 +58,17 @@ services:
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+    dns:
+      - 172.16.238.100
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.10
 
   php56:
     image: degobbis/php56-fpm-alpine:latest
-    container_name: php56
+    hostname: php56
     links:
+      - bind
       - mailhog
       - mysql
     volumes:
@@ -63,12 +88,14 @@ services:
       PHP_ENV: ${PHP_ENV:-production}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.11
 
   php73:
     image: degobbis/php73-fpm-alpine:latest
-    container_name: php73
+    hostname: php73
     links:
+      - bind
       - mailhog
       - mysql
     volumes:
@@ -88,12 +115,14 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.12
 
   php74:
     image: degobbis/php74-fpm-alpine:latest
-    container_name: php74
+    hostname: php74
     links:
+      - bind
       - mailhog
       - mysql
     volumes:
@@ -113,12 +142,14 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.13
 
   php80:
     image: degobbis/php80-fpm-alpine:latest
-    container_name: php80
+    hostname: php80
     links:
+      - bind
       - mailhog
       - mysql
     volumes:
@@ -138,11 +169,14 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.14
 
   mysql:
     image: degobbis/mariadb105-alpine:latest
-    container_name: mysql
+    hostname: mysql
+    links:
+      - bind
     volumes:
       - db-data-dir:/var/lib/mysql
       - ./data/initDB:/docker-entrypoint-initdb.d
@@ -155,21 +189,26 @@ services:
     ports:
       - "3306:3306"
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.15
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: mailhog
+    hostname: mailhog
+    links:
+      - bind
     ports:
       - "8025:8025"
       - "1025:1025"
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.16
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:fpm-alpine
-    container_name: phpmyadmin
+    hostname: phpmyadmin
     links:
+      - bind
       - mysql
     volumes:
       - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
@@ -182,7 +221,8 @@ services:
       UPLOAD_LIMIT: 128M
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
     networks:
-      - lamp
+      lamp:
+        ipv4_address: 172.16.238.17
 
 volumes:
   pma:
@@ -194,8 +234,9 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.bridge.name: "lamp"
+      com.docker.network.enable_ipv6: "false"
     ipam:
       driver: default
       config:
-        - subnet: 192.168.200.0/24
-          gateway: 192.168.200.1
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

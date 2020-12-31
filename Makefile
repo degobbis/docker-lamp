@@ -1,6 +1,7 @@
 #!/usr/bin/env make
 DOCKER_COMPOSE_DIR=.
 DOCKER_COMPOSE=docker-compose --env-file $(DOCKER_COMPOSE_DIR)/.env
+MINICA_DEFAULT_DOMAINS=localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test
 
 
 DEFAULT_GOAL := help
@@ -8,7 +9,7 @@ help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-27s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
-.PHONY: create-env load-env server-up server-down db-backup
+.PHONY: create-certs create-env load-env server-up server-down db-backup
 
 create-env:
 ifeq (,$(wildcard ./.env))
@@ -23,7 +24,15 @@ ifneq (,$(wildcard ./.env))
 endif
 
 
-server-up: load-env ## Start all docker containers.
+create-certs: load-env ## Start all docker containers.
+	@for domain in $(MINICA_DEFAULT_DOMAINS) $(SSL_DOMAINS) ; do \
+		docker run --user $(APP_USER_ID):$(APP_GROUP_ID) -it --rm \
+			-v $(PWD)/.config/httpd/apache24/ca:/certs \
+			degobbis/minica --domains $$domain ; \
+	done ; true
+
+
+server-up: create-certs ## Start all docker containers.
 	@$(DOCKER_COMPOSE) up -d --force-recreate
 
 

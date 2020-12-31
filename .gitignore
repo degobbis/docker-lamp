@@ -2,6 +2,9 @@
 /data/initDB/*
 /data/www/*
 
+# Server certificates
+/.config/**/ca/*
+
 # Docker config files.
 /.env
 /docker-compose.override.yml
@@ -10,7 +13,7 @@
 !/data/www/joomla
 !/data/www/wordpress
 !/data/www/wordpress-multisite
-!/data/**/.gitkeep
+!/**/.gitkeep
 
 # IDEs
 .idea
