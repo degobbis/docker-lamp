@@ -3,6 +3,7 @@ services:
 
   bind:
     image: cytopia/bind:0.15
+    container_name: ${COMPOSE_PROJECT_NAME}_bind
     hostname: bind
     restart: always
     ports:
@@ -19,11 +20,12 @@ services:
       docker.for.lin.host.internal: 172.16.238.1
       docker.for.lin.localhost: 172.16.238.1
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.100
 
   httpd:
     image: degobbis/apache24-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_httpd
     hostname: httpd
     links:
       - bind
@@ -33,7 +35,7 @@ services:
       - php80
       - mailhog
     volumes:
-      - ./.config/httpd/apache24/ca:/usr/local/apache2/ca:rw
+      - ./data/ca:/usr/local/apache2/ca:rw
       - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
       - ./data/phpinfo:/srv/phpinfo:rw
@@ -61,11 +63,12 @@ services:
     dns:
       - 172.16.238.100
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.10
 
   php56:
     image: degobbis/php56-fpm-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php56
     hostname: php56
     links:
       - bind
@@ -88,11 +91,12 @@ services:
       PHP_ENV: ${PHP_ENV:-production}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.11
 
   php73:
     image: degobbis/php73-fpm-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php73
     hostname: php73
     links:
       - bind
@@ -115,11 +119,12 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.12
 
   php74:
     image: degobbis/php74-fpm-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php74
     hostname: php74
     links:
       - bind
@@ -142,11 +147,12 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.13
 
   php80:
     image: degobbis/php80-fpm-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php80
     hostname: php80
     links:
       - bind
@@ -169,11 +175,12 @@ services:
       PHP_ENV: ${PHP_ENV:-development}
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.14
 
   mysql:
     image: degobbis/mariadb105-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_mysql
     hostname: mysql
     links:
       - bind
@@ -189,11 +196,12 @@ services:
     ports:
       - "3306:3306"
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.15
 
   mailhog:
     image: mailhog/mailhog:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_mailhog
     hostname: mailhog
     links:
       - bind
@@ -201,11 +209,12 @@ services:
       - "8025:8025"
       - "1025:1025"
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.16
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
     hostname: phpmyadmin
     links:
       - bind
@@ -221,7 +230,7 @@ services:
       UPLOAD_LIMIT: 128M
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
     networks:
-      lamp:
+      net:
         ipv4_address: 172.16.238.17
 
 volumes:
@@ -230,10 +239,10 @@ volumes:
   phpsocket:
 
 networks:
-  lamp:
+  net:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: "lamp"
+      com.docker.network.bridge.name: "net"
       com.docker.network.enable_ipv6: "false"
     ipam:
       driver: default
