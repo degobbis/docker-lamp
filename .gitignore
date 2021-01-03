@@ -1,9 +1,7 @@
 # App data.
 /data/initDB/*
 /data/www/*
-
-# Server certificates
-/.config/**/ca/*
+/data/ca/*
 
 # Docker config files.
 /.env
@@ -11,8 +9,8 @@
 
 # Exclutions.
 !/data/www/joomla
-!/data/www/wordpress
-!/data/www/wordpress-multisite
+!/data/www/wp
+!/data/www/wp-multisite
 !/**/.gitkeep
 
 # IDEs
