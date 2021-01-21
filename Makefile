@@ -11,7 +11,7 @@ help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-27s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
-.PHONY: create-certs server-up server-down db-backup
+.PHONY: create-certs server-up server-down db-backup update-images
 
 create-env:
 ifeq (,$(wildcard ./.env))
@@ -54,8 +54,9 @@ db-backup: load-env ## Stop all docker containers.
 	@docker exec -it $(COMPOSE_PROJECT_NAME)_mysql backup-databases
 
 
-#docker-prune: ## Remove unused docker resources via 'docker system prune -a -f --volumes'
-#	docker system prune -a -f --volumes
+update-images:
+	@$(DOCKER_COMPOSE) pull
+	@docker rmi $(shell docker images -f "dangling=true" -q)
 
 
 #.PHONY: docker-build-from-scratch
