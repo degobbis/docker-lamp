@@ -11,7 +11,7 @@ help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-27s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 
-.PHONY: create-certs server-up server-down db-backup update-images
+.PHONY: create-certs server-up server-down db-backup update-images delete-obsolete-images
 
 create-env:
 ifeq (,$(wildcard ./.env))
@@ -40,37 +40,27 @@ create-certs: load-env
 	done ; true
 
 
-server-up: create-certs ## Start all docker containers.
+server-up: create-certs ## Start all docker containers, creating new certificates before.
 	@$(DOCKER_COMPOSE) up -d --force-recreate
 
 
-server-down: db-backup ## Stop all docker containers and delete all volumes.
+server-down: db-backup ## Stops all docker containers and delete all volumes, saving all databases before.
 	@$(DOCKER_COMPOSE) down
 	@docker volume ls --filter=name=$(COMPOSE_PROJECT_NAME) | awk 'NR > 1 {print $2}' | xargs docker volume rm --force
 #	docker volume prune --force
 
 
-db-backup: load-env ## Stop all docker containers.
+db-backup: load-env ## Saving all databases.
 	@docker exec -it $(COMPOSE_PROJECT_NAME)_mysql backup-databases
 
 
-update-images:
+update-images: ## Update all images from docker-compose.yml to the latest build.
 	@$(DOCKER_COMPOSE) pull
-	@docker rmi $(shell docker images -f "dangling=true" -q)
 
 
-#.PHONY: docker-build-from-scratch
-#docker-build-from-scratch: ## docker-init ## Build all docker images from scratch, without cache etc. Build a specific image by providing the service name via: make docker-build CONTAINER=<service>
-#	$(DOCKER_COMPOSE) rm -fs $(CONTAINER) && \
-#	$(DOCKER_COMPOSE) build --pull --no-cache --parallel $(CONTAINER) && \
-#	$(DOCKER_COMPOSE) up -d --force-recreate $(CONTAINER)
-
-#.PHONY: docker-test
-#docker-test: ## docker-init docker-up ## Run the infrastructure tests for the docker setup
-#	sh $(DOCKER_COMPOSE_DIR)/docker-test.sh
-
-#.PHONY: docker-build
-#docker-build: docker-init ## Build all docker images. Build a specific image by providing the service name via: make docker-build CONTAINER=<service>
-#	$(DOCKER_COMPOSE) build --parallel $(CONTAINER) && \
-#	$(DOCKER_COMPOSE) up -d --force-recreate $(CONTAINER)
+delete-obsolete-images: ## Delete all obsolete images.
+	$(eval OBSOLETE_IMAGES:=$(shell docker images -f "dangling=true" -q))
+	@echo $(shell [ ! -z "$(OBSOLETE_IMAGES)" ] && echo "Found obsolete Images: $(OBSOLETE_IMAGES)" || echo "No obsolete images found.")
+	$(eval ERROR_DELETE_OBSOLETE:=$(shell [ ! -z "$(OBSOLETE_IMAGES)" ] && { docker rmi $(OBSOLETE_IMAGES) 1>/dev/null; } 2>&1))
+	@echo $(shell if [ -z "$(ERROR_DELETE_OBSOLETE)" ] && [ ! -z "$(OBSOLETE_IMAGES)" ]; then echo "Obsolete images deleted."; else echo "'$(ERROR_DELETE_OBSOLETE)'"; fi)
 
