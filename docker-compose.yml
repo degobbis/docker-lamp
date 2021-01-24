@@ -38,6 +38,7 @@ services:
       - ./data/ca:/usr/local/apache2/ca:rw
       - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
+      - ./data/apache24/my-domains.conf:/usr/local/apache2/vhosts/20-extra-domains.conf:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
       - pma:/srv/pma

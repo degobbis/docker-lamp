@@ -1,4 +1,5 @@
 # App data.
+/data/apache24/*
 /data/initDB/*
 /data/www/*
 /data/ca/*
@@ -8,6 +9,7 @@
 /docker-compose.override.yml
 
 # Exclutions.
+!/data/apache24/my-domains.example
 !/data/www/joomla
 !/data/www/wp
 !/data/www/wp-multisite

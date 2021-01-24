@@ -13,9 +13,16 @@ help:
 
 .PHONY: create-certs server-up server-down db-backup update-images delete-obsolete-images
 
+create-my-domains-conf:
+ifeq (,$(wildcard ./data/apache24/my-domains.conf))
+	@cp $(DOCKER_COMPOSE_DIR)/data/apache24/my-domains.example $(DOCKER_COMPOSE_DIR)/data/apache24/my-domains.conf
+	$(info "created .data/apache24/my-domains.conf")
+endif
+
+
 create-env:
 ifeq (,$(wildcard ./.env))
-	cp $(DOCKER_COMPOSE_DIR)/.env-example $(DOCKER_COMPOSE_DIR)/.env
+	@cp $(DOCKER_COMPOSE_DIR)/.env-example $(DOCKER_COMPOSE_DIR)/.env
 	$(info "created .env from .env-example")
 endif
 
@@ -27,7 +34,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 
-create-certs: load-env
+create-certs: create-my-domains-conf load-env
 	$(eval MINICA_DEFAULT_DOMAINS:=$(shell [ -z "$(SSL_LOCALDOMAINS)" ] && echo $(MINICA_DEFAULT_DOMAINS) || echo $(MINICA_DEFAULT_DOMAINS),$(SSL_LOCALDOMAINS)))
 	$(eval MINICA_DEFAULT_DOMAINS:=$(shell [ -z "$(SSL_DOMAINS)" ] && echo $(MINICA_DEFAULT_DOMAINS) || echo $(MINICA_DEFAULT_DOMAINS)$(space)$(SSL_DOMAINS)))
 	@for domain in $(MINICA_DEFAULT_DOMAINS) ; do \
