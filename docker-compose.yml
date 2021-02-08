@@ -41,7 +41,7 @@ services:
       - ./data/apache24/my-domains.conf:/usr/local/apache2/vhosts/20-extra-domains.conf:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
-      - ${PROJEKTS_BASEDIR:-./data/projekts}:/srv/git:rw
+      - ${PROJEKTS_BASEDIR:-./data/projects}:/srv/git:rw
       - pma:/srv/pma
       - phpsocket:/run/php
     ports:
@@ -84,7 +84,7 @@ services:
       - ./.config/php/php56/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
-      - ${PROJEKTS_BASEDIR:-./data/projekts}:/srv/git:rw
+      - ${PROJEKTS_BASEDIR:-./data/projects}:/srv/git:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}
@@ -113,7 +113,7 @@ services:
       - ./.config/php/php73/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
-      - ${PROJEKTS_BASEDIR:-./data/projekts}:/srv/git:rw
+      - ${PROJEKTS_BASEDIR:-./data/projects}:/srv/git:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}
@@ -142,7 +142,7 @@ services:
       - ./.config/php/php74/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
-      - ${PROJEKTS_BASEDIR:-./data/projekts}:/srv/git:rw
+      - ${PROJEKTS_BASEDIR:-./data/projects}:/srv/git:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}
@@ -171,7 +171,7 @@ services:
       - ./.config/php/php80/php-version-overrides.ini:/usr/local/etc/php/conf.d/z99-php-version-overrides.ini:rw
       - ./data/phpinfo:/srv/phpinfo:rw
       - ${WWW_BASEDIR:-./data/www}:/srv/www:rw
-      - ${PROJEKTS_BASEDIR:-./data/projekts}:/srv/git:rw
+      - ${PROJEKTS_BASEDIR:-./data/projects}:/srv/git:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}
