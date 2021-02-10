@@ -1,5 +1,6 @@
 #!/usr/bin/env make
-DOCKER_COMPOSE_DIR:=.
+DOCKER_COMPOSE_BASEDIR:=.
+DOCKER_COMPOSE_DIR:=$(shell echo $(shell cd $(DOCKER_COMPOSE_BASEDIR); pwd))
 empty:=
 space:= $(empty) $(empty)
 DOCKER_COMPOSE:=docker-compose --env-file $(DOCKER_COMPOSE_DIR)/.env
@@ -13,33 +14,28 @@ help:
 
 .PHONY: create-certs server-up server-down db-backup update-images delete-obsolete-images
 
-create-my-domains-conf:
-ifeq (,$(wildcard ./data/apache24/my-domains.conf))
-	@cp $(DOCKER_COMPOSE_DIR)/data/apache24/my-domains.example $(DOCKER_COMPOSE_DIR)/data/apache24/my-domains.conf
-	$(info "created .data/apache24/my-domains.conf")
-endif
-
 
 create-env:
-ifeq (,$(wildcard ./.env))
+ifeq (,$(wildcard $(DOCKER_COMPOSE_DIR)/.env))
 	@cp $(DOCKER_COMPOSE_DIR)/.env-example $(DOCKER_COMPOSE_DIR)/.env
 	$(info "created .env from .env-example")
 endif
 
 
 load-env: create-env
-ifneq (,$(wildcard ./.env))
+ifneq (,$(wildcard $(DOCKER_COMPOSE_DIR)/.env))
 	$(eval include $(DOCKER_COMPOSE_DIR)/.env)
 	$(info $(DOCKER_COMPOSE_DIR)/.env included)
 endif
 
 
-create-certs: create-my-domains-conf load-env
+create-certs: load-env
+	$(eval MINICA_BASEDIR:=$(shell echo $(shell cd $(APP_BASEDIR)/ca; pwd)))
 	$(eval MINICA_DEFAULT_DOMAINS:=$(shell [ -z "$(SSL_LOCALDOMAINS)" ] && echo $(MINICA_DEFAULT_DOMAINS) || echo $(MINICA_DEFAULT_DOMAINS),$(SSL_LOCALDOMAINS)))
 	$(eval MINICA_DEFAULT_DOMAINS:=$(shell [ -z "$(SSL_DOMAINS)" ] && echo $(MINICA_DEFAULT_DOMAINS) || echo $(MINICA_DEFAULT_DOMAINS)$(space)$(SSL_DOMAINS)))
 	@for domain in $(MINICA_DEFAULT_DOMAINS) ; do \
-		docker run --user $(APP_USER_ID):$(APP_GROUP_ID) -it --rm \
-			-v "$(PWD)/data/ca:/certs" \
+		docker run --user $(APP_USER_ID) -it --rm \
+			-v "$(MINICA_BASEDIR):/certs" \
 			degobbis/minica \
 			--ca-cert minica-root-ca.pem \
 			--ca-key minica-root-ca-key.pem \
