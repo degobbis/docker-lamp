@@ -86,8 +86,6 @@ services:
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       PHP_ENV: ${PHP_ENV:-production}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php56/"
-      XDEBUG_CONFIG: "idekey=${IDE_KEY:-PHPSTORM}"
-      XDEBUG_SESSION: 1
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
@@ -115,8 +113,6 @@ services:
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php73/"
-      XDEBUG_CONFIG: "idekey=${IDE_KEY:-PHPSTORM}"
-      XDEBUG_SESSION: 1
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
@@ -144,8 +140,6 @@ services:
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php74/"
-      XDEBUG_CONFIG: "idekey=${IDE_KEY:-PHPSTORM}"
-      XDEBUG_SESSION: 1
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
@@ -173,8 +167,6 @@ services:
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php80/"
-      XDEBUG_CONFIG: "idekey=${IDE_KEY:-PHPSTORM}"
-      XDEBUG_SESSION: 1
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
