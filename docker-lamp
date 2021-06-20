@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+
+# Define debug mode.
+DEBUG=1
+
+# Define the basedir for the docker compose.
+DOCKER_COMPOSE_BASEDIR="$(dirname "$(realpath $0)")"
+
+# Load the functions for the script
+. $DOCKER_COMPOSE_BASEDIR/.config/functions.sh
+
+# If called without command, return help and exit.
+[ "$#" -eq 0 ] && usage && exit 1
+
+# Define the basedir for the .env file
+ENV_FILE_BASEDIR="$(pwd)"
+
+if [ -f "$ENV_FILE_BASEDIR/.env" ]
+then
+    # Load the user configuration
+    . $ENV_FILE_BASEDIR/.env
+else
+    error "No '.env' file found in '$ENV_FILE_BASEDIR'!"
+    warn "Please copy '$DOCKER_COMPOSE_BASEDIR/.env-example' to '$ENV_FILE_BASEDIR/.env' and define Your preferred configuration,"
+    warn "or change to the directory, where the '.env' file is."
+    exit 1
+fi
+
+DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE_BASEDIR/.env -f $ENV_FILE_BASEDIR/final.yml"
+
+# define the command, the argument and the parameters allowed for the command
+case "$1" in
+    start|restart|halt|stop|backup-db|update-images|delete-obsolete-images)
+        COMMAND="$1"
+        ARGUMENT=""
+        shift 1
+        ;;&
+    start|restart)
+        LONG="php: httpd: db: map-80-443: bind-off help"
+        SHORT="p: h: d: m:"
+        ;;
+    halt)
+        LONG="php: httpd: db: bind-off help"
+        SHORT="p: h: d: h"
+        ;;
+    stop)
+        LONG="php: httpd: db: bind-off help"
+        SHORT="p: h: d: h"
+        ;;
+    backup-db)
+        LONG="php: httpd: db: bind-off help"
+        SHORT="p: h: d: h"
+        ;;
+    update-images)
+        LONG="php: httpd: db: bind-off help"
+        SHORT="p: h: d: h"
+        ;;
+    delete-obsolete-images)
+        LONG="php: httpd: db: bind-off help"
+        SHORT="p: h: d: h"
+        ;;
+    cli)
+        COMMAND=$1
+        ARGUMENT=$2
+        SHORT="1:,2::"
+        LONG="test1:,test2::"
+        shift 2
+        ;;
+    --help)
+        usage
+        exit 0
+       ;;
+esac
+
+[ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 -h|--help'." && exit 1
+
+
+headline "----------------------"
+log "COMMAND: $COMMAND"
+log "ARGUMENT: $ARGUMENT"
+log "SHORT: $SHORT"
+log "LONG: $LONG"
+
+
+DOCKER_COMPOSE="docker-compose --env-file $ENV_FILE_BASEDIR/.env"
+LOAD_YAML=" -f $DOCKER_COMPOSE_BASEDIR/.config/base/base.yml"
+MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
+
+
+headline "before getopt"
+log "\$@:" "$@"
+log "\$1: $1"
+log "\$2: $2"
+
+OPTIONS=$(getopt -q -o "$SHORT" -l "$LONG" -n "$0" -- "$@")
+[ "$?" -eq 1 ] && error "The parameter" "$@" "is not set correctly!" && warn "For help call '$0 -h|--help'." && exit 1
+log "\$OPTIONS: $OPTIONS"
+
+eval set -- "$OPTIONS"
+
+headline "after getopt"
+log "\$@:" "$@"
+log "\$1: $1"
+log "\$2: $2"
+
+SHORT="-$(echo "$SHORT" | sed "s/://g" | sed "s/ / -/g")"
+log "SHORT:" "$SHORT"
+
+LONG="--$(echo "$LONG" | sed "s/://g" | sed "s/ / --/g")"
+log "LONG:" "$LONG"
+
+CASE="$SHORT $LONG"
+log "CASE:" "$CASE"
+
+headline "Evaluate parameters"
+while true; do
+    log "--------------"
+    log "Parameter: $1"
+
+    if [ -z "${CASE##*$1*}" ] ;then
+         case "$1" in
+            --help)
+                usage $COMMAND
+                exit 0
+               ;;
+            -h | --httpd)
+                HTTPD="$2"
+                log "set $2"
+                shift 2
+                ;;
+            -p | --php)
+                PHP_TO_USE="$2"
+                log "set '$2'"
+                shift 2
+                ;;
+            --bind-off)
+                USE_BIND=0
+                log "set off"
+                shift
+                ;;
+            -t | --test)
+                RunTest=1
+                shift
+                ;;
+            -r | --restore)
+                Restore=1
+                shift
+                ;;
+            -c | --config)
+                _config="$2"
+                shift 2
+                ;;
+            -s | --source)
+                _source="$2"
+                shift 2
+                ;;
+            -d | --dest)
+                _target="$2"
+                shift 2
+                ;;
+            -o | --options)
+                _options="$2"
+                shift 2
+                ;;
+            -l | --log)
+                _log="$2"
+                shift 2
+                ;;
+            -e | --exclude)
+                _exclude="$2"
+                shift 2
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+    else
+        error "The parameter '$1' is not allowed here!"
+        exit 1
+    fi
+done
+
+[ -n "$1" ] && \
+    error "The argument '$1' is not allowed at this place!" && \
+    warn "For help call '$0 -h|--help'." && \
+    exit 1
+
+PHP_TO_USE=$(echo "$PHP_TO_USE" | sed "s/, / /g" | sed "s/,/ /g")
+
+headline "after editing the parameters"
+log "\$@:" "$@"
+log "\$1: $1"
+log "HTTPD: $HTTPD"
+log "PHP_TO_USE: $PHP_TO_USE"
+#PHP_SPLIT=$(echo "$PHP" | tr -s "," " ")
+#log "PHP_SPLIT: $PHP_SPLIT"
+
+MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
+MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
+
+
+HTTPD_PORT_PHP56="8056"
+HTTPD_SSL_PORT_PHP56="8456"
+HTTPD_PORT_PHP73="8073"
+HTTPD_SSL_PORT_PHP73="8473"
+HTTPD_PORT_PHP74="8074"
+HTTPD_SSL_PORT_PHP74="8474"
+HTTPD_PORT_PHP80="8080"
+HTTPD_SSL_PORT_PHP80="8480"
+HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443 8000:8000 8400:8400"
+
+HTTPD_LINKS_LIST="bind $PHP_TO_USE mailhog"
+
+for var in $PHP_TO_USE; do
+    PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
+    PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
+    HTTPD_PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
+    HTTPD_PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
+
+    if [ -f "$APP_BASEDIR/php/$var/config.yml" ]; then
+        LOAD_YAML="$LOAD_YAML -f $APP_BASEDIR/php/$var/config.yml"
+    elif [ -f "$DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml" ]; then
+        LOAD_YAML="$LOAD_YAML -f $DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml"
+    else
+        echo
+        error "docker-compose configuration file for '$var' not found!"
+        warn "Searched in '$APP_BASEDIR/php/$var/config.yml'"
+        warn "and '$DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml'"
+        exit 1
+    fi
+
+    HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $PHP_PORT:$HTTPD_PHP_PORT $PHP_SSL_PORT:$HTTPD_PHP_SSL_PORT"
+done
+
+[ ! -z "$CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $CUSTOM_PORTS"
+
+BACKUP_FOLDER=$(basename ${_BACKUP_FOLDER:-$(date +%Y%m%d)})
+
+#cat $DOCKER_COMPOSE_BASEDIR/.env > $DOCKER_COMPOSE_BASEDIR/tmp_env
+#echo "HTTPD_PORTS=$HTTPD_PORTS" >> $DOCKER_COMPOSE_BASEDIR/tmp_env
+
+echo
+log "HTTPD_PORTS_LIST: $HTTPD_PORTS_LIST"
+log "HTTPD_LINKS_LIST: $HTTPD_LINKS_LIST"
+
+export HTTPD_PORTS=$(get_yaml_list "$HTTPD_PORTS_LIST")
+export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
+
+echo
+log "HTTPD_PORTS: $HTTPD_PORTS"
+log "HTTPD_LINKS: $HTTPD_LINKS"
+log "DOCKER_COMPOSE_BASEDIR: $DOCKER_COMPOSE_BASEDIR"
+log "BACKUP_FOLDER: $BACKUP_FOLDER"
+log "APP_BASEDIR: $APP_BASEDIR"
+log "LOAD_YAML: $LOAD_YAML"
+
+rm -f $DOCKER_COMPOSE_BASEDIR/final.yml
+( echo "cat <<EOF > $DOCKER_COMPOSE_BASEDIR/final.yml";
+  cat $DOCKER_COMPOSE_BASEDIR/docker-compose.yml;
+  echo "EOF";
+) > $DOCKER_COMPOSE_BASEDIR/temp.yml
+. $DOCKER_COMPOSE_BASEDIR/temp.yml
+rm -f $DOCKER_COMPOSE_BASEDIR/temp.yml
+
+
+#$DOCKER_COMPOSE_BASEDIR/docker-compose.yml
+
+#export HTTPD_PORTS=[$(echo "$HTTPD_PORTS")] && docker-compose up -d --force-recreate
+
+[ "$COMMAND" = "start" ] && $DOCKER_COMPOSE_CALL up -d --force-recreate && exit 0
+[ "$COMMAND" = "halt" ] && $DOCKER_COMPOSE_CALL down && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep -v 'db-data' | awk 'NR > 1 {print $2}' | xargs docker volume rm --force | xargs echo "Removing volumes:" && exit 0
+[ "$COMMAND" = "stop" ] && $DOCKER_COMPOSE_CALL down && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | awk 'NR > 1 {print $2}' | xargs docker volume rm --force | xargs echo "Removing volumes:" && exit 0
+#docker-compose -f $DOCKER_COMPOSE_BASEDIR/final.yml up -d --force-recreate
+#rm -f $DOCKER_COMPOSE_BASEDIR/tmp_env

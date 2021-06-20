@@ -23,18 +23,36 @@ services:
       net:
         ipv4_address: 172.16.238.100
 
-  apache24:
+  httpd:
     image: degobbis/apache24-alpine:latest
     container_name: ${COMPOSE_PROJECT_NAME}_httpd
-    hostname: apache24
-    links: ${HTTPD_LINKS}
+    hostname: httpd
+    links:
+      - bind
+      - php56
+      - php73
+      - php74
+      - php80
+      - mailhog
     volumes:
       - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
       - ${APP_BASEDIR:-./data}:/srv:rw
       - pma:/var/www/pma
       - phpsocket:/run/php
-    ports: ${HTTPD_PORTS}
+    ports:
+      - "80:${MAP_POT_80:-8074}"
+      - "8000:8000"
+      - "8056:8056"
+      - "8073:8073"
+      - "8074:8074"
+      - "8080:8080"
+      - "443:${MAP_POT_443:-8474}"
+      - "8400:8400"
+      - "8456:8456"
+      - "8473:8473"
+      - "8474:8474"
+      - "8480:8480"
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
@@ -53,7 +71,7 @@ services:
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mysql
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php56/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
@@ -81,7 +99,7 @@ services:
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mysql
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php73/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
@@ -109,7 +127,7 @@ services:
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mysql
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php74/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
@@ -137,7 +155,7 @@ services:
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mysql
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php80/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
@@ -159,14 +177,14 @@ services:
       net:
         ipv4_address: 172.16.238.14
 
-  mariadb105:
+  mysql:
     image: degobbis/mariadb105-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_db
+    container_name: ${COMPOSE_PROJECT_NAME}_mysql
     hostname: mysql
     links:
       - bind
     volumes:
-      - db-data:/var/lib/mysql
+      - db-data-dir:/var/lib/mysql
       - ${APP_BASEDIR:-./data}/initDB:/docker-entrypoint-initdb.d
     environment:
       TZ: ${MY_TZ:-UTC}
@@ -199,7 +217,7 @@ services:
     hostname: phpmyadmin
     links:
       - bind
-      - ${DATABASE_TO_USE}
+      - mysql
     volumes:
       - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
       - pma:/var/www/html
@@ -218,7 +236,7 @@ services:
 
 volumes:
   pma:
-  db-data:
+  db-data-dir:
   phpsocket:
 
 networks:

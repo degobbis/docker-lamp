@@ -3,16 +3,16 @@ services:
 
   bind:
     image: cytopia/bind:0.15
-    container_name: ${COMPOSE_PROJECT_NAME}_bind
+    container_name: docker-lamp_bind
     hostname: bind
     restart: always
     ports:
       - "53:53/tcp"
       - "53:53/udp"
     environment:
-      - WILDCARD_DNS=${TLD_SUFFIX}
-      - EXTRA_HOSTS=${EXTRA_HOSTS}
-      - DNS_FORWARDER=${BIND_DNS_RESOLVER}
+      - WILDCARD_DNS=local=192.168.178.19,test=192.168.178.19
+      - EXTRA_HOSTS=
+      - DNS_FORWARDER=192.168.178.1,1.1.1.1,1.0.0.1
     dns:
       - 127.0.0.1
     # MacOS and Windows have this by default, this hack also allows it for Linux
@@ -25,21 +25,39 @@ services:
 
   apache24:
     image: degobbis/apache24-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_httpd
+    container_name: docker-lamp_httpd
     hostname: apache24
-    links: ${HTTPD_LINKS}
+    links: 
+      - "bind"
+      - "php56"
+      - "php73"
+      - "php74"
+      - "php80"
+      - "mailhog"
     volumes:
       - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - /srv:/srv:rw
       - pma:/var/www/pma
       - phpsocket:/run/php
-    ports: ${HTTPD_PORTS}
+    ports: 
+      - "80:8074"
+      - "443:8474"
+      - "8000:8000"
+      - "8400:8400"
+      - "8056:8056"
+      - "8456:8456"
+      - "8073:8073"
+      - "8473:8473"
+      - "8074:8074"
+      - "8474:8474"
+      - "8080:8080"
+      - "8480:8480"
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
     dns:
       - 172.16.238.100
     networks:
@@ -48,132 +66,132 @@ services:
 
   php56:
     image: degobbis/php56-fpm-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_php56
+    container_name: docker-lamp_php56
     hostname: php56
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mariadb105
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php56/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
       - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - /srv:/srv:rw
       - phpsocket:/run/php
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-      PHP_ENV: ${PHP_ENV:-production}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
+      PHP_ENV: development
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php56/"
       XDEBUG_CONFIG: ""
-      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+      XDEBUG_REMOTE_HOST: 192.168.178.19
     networks:
       net:
         ipv4_address: 172.16.238.11
 
   php73:
     image: degobbis/php73-fpm-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_php73
+    container_name: docker-lamp_php73
     hostname: php73
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mariadb105
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php73/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
       - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - /srv:/srv:rw
       - phpsocket:/run/php
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-      PHP_ENV: ${PHP_ENV:-development}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
+      PHP_ENV: development
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php73/"
       XDEBUG_CONFIG: ""
-      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+      XDEBUG_REMOTE_HOST: 192.168.178.19
     networks:
       net:
         ipv4_address: 172.16.238.12
 
   php74:
     image: degobbis/php74-fpm-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_php74
+    container_name: docker-lamp_php74
     hostname: php74
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mariadb105
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php74/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
       - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - /srv:/srv:rw
       - phpsocket:/run/php
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-      PHP_ENV: ${PHP_ENV:-development}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
+      PHP_ENV: development
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php74/"
       XDEBUG_CONFIG: ""
-      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+      XDEBUG_REMOTE_HOST: 192.168.178.19
     networks:
       net:
         ipv4_address: 172.16.238.13
 
   php80:
     image: degobbis/php80-fpm-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_php80
+    container_name: docker-lamp_php80
     hostname: php80
     links:
       - bind
       - mailhog
-      - ${DATABASE_TO_USE}
+      - mariadb105
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ./.config/php/php80/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
       - ./.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - /srv:/srv:rw
       - phpsocket:/run/php
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-      PHP_ENV: ${PHP_ENV:-development}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
+      PHP_ENV: development
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php80/"
       XDEBUG_CONFIG: ""
       XDEBUG_SESSION: 1
-      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+      XDEBUG_REMOTE_HOST: 192.168.178.19
     networks:
       net:
         ipv4_address: 172.16.238.14
 
   mariadb105:
     image: degobbis/mariadb105-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_db
+    container_name: docker-lamp_db
     hostname: mysql
     links:
       - bind
     volumes:
       - db-data:/var/lib/mysql
-      - ${APP_BASEDIR:-./data}/initDB:/docker-entrypoint-initdb.d
+      - /srv/initDB:/docker-entrypoint-initdb.d
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
-      APP_USER_ID: ${APP_USER_ID:-1000}
-      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      MYSQL_ROOT_PASSWORD: M0ntag
+      APP_USER_ID: 1000
+      APP_GROUP_ID: 1000
     ports:
       - "3306:3306"
     networks:
@@ -182,7 +200,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mailhog
+    container_name: docker-lamp_mailhog
     hostname: mailhog
     links:
       - bind
@@ -195,23 +213,23 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:fpm-alpine
-    container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
+    container_name: docker-lamp_phpmyadmin
     hostname: phpmyadmin
     links:
       - bind
-      - ${DATABASE_TO_USE}
+      - mariadb105
     volumes:
       - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
       - pma:/var/www/html
     environment:
-      TZ: ${MY_TZ:-UTC}
-      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
       PMA_HOST: mysql
       PMA_PORT: 3306
-      MAX_EXECUTION_TIME: ${PMA_MAX_EXECUTION_TIME:-600}
-      MEMORY_LIMIT: ${PMA_MEMORY_LIMIT:-512M}
-      UPLOAD_LIMIT: ${PMA_UPLOAD_LIMIT:-512M}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+      UPLOAD_LIMIT: 512M
+      MYSQL_ROOT_PASSWORD: M0ntag
     networks:
       net:
         ipv4_address: 172.16.238.17
