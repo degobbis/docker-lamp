@@ -27,14 +27,32 @@ services:
     image: degobbis/apache24-alpine:latest
     container_name: ${COMPOSE_PROJECT_NAME}_httpd
     hostname: apache24
-    links: ${HTTPD_LINKS}
+    links:
+      - bind
+      - php56
+      - php73
+      - php74
+      - php80
+      - mailhog
     volumes:
       - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
       - ${APP_BASEDIR:-./data}:/srv:rw
       - pma:/var/www/pma
       - phpsocket:/run/php
-    ports: ${HTTPD_PORTS}
+    ports:
+      - "80:${MAP_POT_80:-8074}"
+      - "8000:8000"
+      - "8056:8056"
+      - "8073:8073"
+      - "8074:8074"
+      - "8080:8080"
+      - "443:${MAP_POT_443:-8474}"
+      - "8400:8400"
+      - "8456:8456"
+      - "8473:8473"
+      - "8474:8474"
+      - "8480:8480"
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
@@ -51,7 +69,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_php56
     hostname: php56
     links:
-      - bind
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
@@ -79,7 +96,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_php73
     hostname: php73
     links:
-      - bind
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
@@ -107,7 +123,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_php74
     hostname: php74
     links:
-      - bind
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
@@ -135,7 +150,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_php80
     hostname: php80
     links:
-      - bind
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
@@ -163,15 +177,13 @@ services:
     image: degobbis/mariadb105-alpine:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db
     hostname: mysql
-    links:
-      - bind
     volumes:
       - db-data:/var/lib/mysql
       - ${APP_BASEDIR:-./data}/initDB:/docker-entrypoint-initdb.d
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
     ports:
@@ -184,8 +196,6 @@ services:
     image: mailhog/mailhog:latest
     container_name: ${COMPOSE_PROJECT_NAME}_mailhog
     hostname: mailhog
-    links:
-      - bind
     ports:
       - "8025:8025"
       - "1025:1025"
@@ -198,7 +208,6 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
     hostname: phpmyadmin
     links:
-      - bind
       - ${DATABASE_TO_USE}
     volumes:
       - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
@@ -211,7 +220,7 @@ services:
       MAX_EXECUTION_TIME: ${PMA_MAX_EXECUTION_TIME:-600}
       MEMORY_LIMIT: ${PMA_MEMORY_LIMIT:-512M}
       UPLOAD_LIMIT: ${PMA_UPLOAD_LIMIT:-512M}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWD:-root}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
     networks:
       net:
         ipv4_address: 172.16.238.17

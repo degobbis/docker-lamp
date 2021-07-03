@@ -1,5 +1,3 @@
-version: '3'
-services:
 
   bind:
     image: cytopia/bind:0.15

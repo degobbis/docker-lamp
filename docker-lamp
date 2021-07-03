@@ -30,22 +30,22 @@ DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE_BASEDIR/.env -f $ENV_FI
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
-    start|restart|halt|stop|backup-db|update-images|delete-obsolete-images)
+    start|restart|stop|halt|backup-db|update-images|delete-obsolete-images)
         COMMAND="$1"
         ARGUMENT=""
         shift 1
         ;;&
     start|restart)
-        LONG="php: httpd: db: map-80-443: bind-off help"
-        SHORT="p: h: d: m:"
-        ;;
-    halt)
-        LONG="php: httpd: db: bind-off help"
-        SHORT="p: h: d: h"
+        LONG="php: httpd: db: map-80-443: bind-off bind-on help"
+        SHORT="p: H: d: m:"
         ;;
     stop)
-        LONG="php: httpd: db: bind-off help"
-        SHORT="p: h: d: h"
+        LONG="backup-folder: archive help"
+        SHORT="b: a"
+        ;;
+    halt)
+        LONG="backup-folder: archive help"
+        SHORT="b: a"
         ;;
     backup-db)
         LONG="php: httpd: db: bind-off help"
@@ -80,11 +80,6 @@ log "COMMAND: $COMMAND"
 log "ARGUMENT: $ARGUMENT"
 log "SHORT: $SHORT"
 log "LONG: $LONG"
-
-
-DOCKER_COMPOSE="docker-compose --env-file $ENV_FILE_BASEDIR/.env"
-LOAD_YAML=" -f $DOCKER_COMPOSE_BASEDIR/.config/base/base.yml"
-MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
 
 
 headline "before getopt"
@@ -123,28 +118,34 @@ while true; do
                 usage $COMMAND
                 exit 0
                ;;
-            -h | --httpd)
+            -H | --httpd)
                 HTTPD="$2"
-                log "set $2"
+                log "set HTTPD to '$2'"
                 shift 2
                 ;;
             -p | --php)
                 PHP_TO_USE="$2"
-                log "set '$2'"
+                log "set PHP to '$2'"
                 shift 2
+                ;;
+            --bind-on)
+                USE_BIND=1
+                log "set BIND on"
+                shift
                 ;;
             --bind-off)
                 USE_BIND=0
-                log "set off"
+                log "set BIND off"
                 shift
                 ;;
-            -t | --test)
-                RunTest=1
+            -a | --archive)
+                ARCHIVE_DATABASES=1
                 shift
                 ;;
-            -r | --restore)
-                Restore=1
-                shift
+            -b | --backup-folder)
+                ARCHIVE_FOLDER="$2"
+                log "set ARCHIVE_FOLDER to '$2'"
+                shift 2
                 ;;
             -c | --config)
                 _config="$2"
@@ -193,12 +194,9 @@ log "\$@:" "$@"
 log "\$1: $1"
 log "HTTPD: $HTTPD"
 log "PHP_TO_USE: $PHP_TO_USE"
-#PHP_SPLIT=$(echo "$PHP" | tr -s "," " ")
-#log "PHP_SPLIT: $PHP_SPLIT"
 
 MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
 MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
-
 
 HTTPD_PORT_PHP56="8056"
 HTTPD_SSL_PORT_PHP56="8456"
@@ -210,7 +208,21 @@ HTTPD_PORT_PHP80="8080"
 HTTPD_SSL_PORT_PHP80="8480"
 HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443 8000:8000 8400:8400"
 
-HTTPD_LINKS_LIST="bind $PHP_TO_USE mailhog"
+# Define the LOAD_YAML variable with base YAML-Config
+add_yaml_to_load base
+
+# Add phpmyadmin YAML-Config to LOAD_YAML
+add_yaml_to_load phpmyadmin
+HTTPD_LINKS_LIST="phpmyadmin"
+
+# Add mailhog YAML-Config to LOAD_YAML
+add_yaml_to_load mailhog
+
+# Add BIND support, if not disabled
+if [ -z "$BIND_OFF" ]; then
+    add_yaml_to_load bind
+    HTTPD_LINKS_LIST="bind $HTTPD_LINKS_LIST"
+fi
 
 for var in $PHP_TO_USE; do
     PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
@@ -218,34 +230,28 @@ for var in $PHP_TO_USE; do
     HTTPD_PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
     HTTPD_PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
 
-    if [ -f "$APP_BASEDIR/php/$var/config.yml" ]; then
-        LOAD_YAML="$LOAD_YAML -f $APP_BASEDIR/php/$var/config.yml"
-    elif [ -f "$DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml" ]; then
-        LOAD_YAML="$LOAD_YAML -f $DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml"
-    else
-        echo
-        error "docker-compose configuration file for '$var' not found!"
-        warn "Searched in '$APP_BASEDIR/php/$var/config.yml'"
-        warn "and '$DOCKER_COMPOSE_BASEDIR/.config/php/$var/config.yml'"
-        exit 1
-    fi
+    # Add php versions YAML-Config to LOAD_YAML
+    add_yaml_to_load php/$var
 
+    # Define the ports to map into the HTTPD container
     HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $PHP_PORT:$HTTPD_PHP_PORT $PHP_SSL_PORT:$HTTPD_PHP_SSL_PORT"
 done
 
-[ ! -z "$CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $CUSTOM_PORTS"
+# Exdend the links list of the HTTPD container with the loaded php versions
+HTTPD_LINKS_LIST="$HTTPD_LINKS_LIST $PHP_TO_USE"
 
-BACKUP_FOLDER=$(basename ${_BACKUP_FOLDER:-$(date +%Y%m%d)})
-
-#cat $DOCKER_COMPOSE_BASEDIR/.env > $DOCKER_COMPOSE_BASEDIR/tmp_env
-#echo "HTTPD_PORTS=$HTTPD_PORTS" >> $DOCKER_COMPOSE_BASEDIR/tmp_env
+# Exdend the ports list of the HTTPD container with the custom ports defined
+[ ! -z "$HTTPD_CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $HTTPD_CUSTOM_PORTS"
 
 echo
+log "LOAD_YAML: $LOAD_YAML"
 log "HTTPD_PORTS_LIST: $HTTPD_PORTS_LIST"
 log "HTTPD_LINKS_LIST: $HTTPD_LINKS_LIST"
 
 export HTTPD_PORTS=$(get_yaml_list "$HTTPD_PORTS_LIST")
 export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
+
+BACKUP_FOLDER=$(basename ${_BACKUP_FOLDER:-$(date +%Y%m%d)})
 
 echo
 log "HTTPD_PORTS: $HTTPD_PORTS"
@@ -257,19 +263,36 @@ log "LOAD_YAML: $LOAD_YAML"
 
 rm -f $DOCKER_COMPOSE_BASEDIR/final.yml
 ( echo "cat <<EOF > $DOCKER_COMPOSE_BASEDIR/final.yml";
-  cat $DOCKER_COMPOSE_BASEDIR/docker-compose.yml;
+  cat $LOAD_YAML;
   echo "EOF";
 ) > $DOCKER_COMPOSE_BASEDIR/temp.yml
 . $DOCKER_COMPOSE_BASEDIR/temp.yml
 rm -f $DOCKER_COMPOSE_BASEDIR/temp.yml
 
 
+MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
+
+
+exit 1
 #$DOCKER_COMPOSE_BASEDIR/docker-compose.yml
 
 #export HTTPD_PORTS=[$(echo "$HTTPD_PORTS")] && docker-compose up -d --force-recreate
 
 [ "$COMMAND" = "start" ] && $DOCKER_COMPOSE_CALL up -d --force-recreate && exit 0
-[ "$COMMAND" = "halt" ] && $DOCKER_COMPOSE_CALL down && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep -v 'db-data' | awk 'NR > 1 {print $2}' | xargs docker volume rm --force | xargs echo "Removing volumes:" && exit 0
-[ "$COMMAND" = "stop" ] && $DOCKER_COMPOSE_CALL down && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | awk 'NR > 1 {print $2}' | xargs docker volume rm --force | xargs echo "Removing volumes:" && exit 0
+
+[ "$COMMAND" = "halt" ] && $DOCKER_COMPOSE_CALL down \
+    && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
+    | grep -v 'db-data' | awk 'NR > 1 {print $2}' \
+    | xargs docker volume rm --force \
+    | xargs echo "Removing volumes:" \
+    && exit 0
+
+[ "$COMMAND" = "stop" ] && $DOCKER_COMPOSE_CALL down \
+    && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
+    | awk 'NR > 1 {print $2}' \
+    | xargs docker volume rm --force \
+    | xargs echo "Removing volumes:" \
+    && exit 0
+
 #docker-compose -f $DOCKER_COMPOSE_BASEDIR/final.yml up -d --force-recreate
 #rm -f $DOCKER_COMPOSE_BASEDIR/tmp_env

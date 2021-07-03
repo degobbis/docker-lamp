@@ -1,5 +1,56 @@
 version: '3'
-services:
+
+volumes:
+  pma:
+  db-data-dir:
+  phpsocket:
+
+networks:
+  net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: "net"
+      com.docker.network.enable_ipv6: "false"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+
+service:
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: docker-lamp_phpmyadmin
+    hostname: phpmyadmin
+    links:
+      - mariadb105
+    volumes:
+      - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+      - pma:/var/www/html
+    environment:
+      TZ: Europe/Berlin
+      LC_ALL: de_DE.UTF-8
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+      UPLOAD_LIMIT: 512M
+      MYSQL_ROOT_PASSWORD: M0ntag
+    networks:
+      net:
+        ipv4_address: 172.16.238.17
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: docker-lamp_mailhog
+    hostname: mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      net:
+        ipv4_address: 172.16.238.16
 
   bind:
     image: cytopia/bind:0.15
@@ -23,109 +74,11 @@ services:
       net:
         ipv4_address: 172.16.238.100
 
-  apache24:
-    image: degobbis/apache24-alpine:latest
-    container_name: docker-lamp_httpd
-    hostname: apache24
-    links: 
-      - "bind"
-      - "php56"
-      - "php73"
-      - "php74"
-      - "php80"
-      - "mailhog"
-    volumes:
-      - ./.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
-      - ./.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
-      - /srv:/srv:rw
-      - pma:/var/www/pma
-      - phpsocket:/run/php
-    ports: 
-      - "80:8074"
-      - "443:8474"
-      - "8000:8000"
-      - "8400:8400"
-      - "8056:8056"
-      - "8456:8456"
-      - "8073:8073"
-      - "8473:8473"
-      - "8074:8074"
-      - "8474:8474"
-      - "8080:8080"
-      - "8480:8480"
-    environment:
-      TZ: Europe/Berlin
-      LC_ALL: de_DE.UTF-8
-      APP_USER_ID: 1000
-      APP_GROUP_ID: 1000
-    dns:
-      - 172.16.238.100
-    networks:
-      net:
-        ipv4_address: 172.16.238.10
-
-  php56:
-    image: degobbis/php56-fpm-alpine:latest
-    container_name: docker-lamp_php56
-    hostname: php56
-    links:
-      - bind
-      - mailhog
-      - mariadb105
-    volumes:
-      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
-      - ./.config/php/php56/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
-      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
-      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
-      - /srv:/srv:rw
-      - phpsocket:/run/php
-    environment:
-      TZ: Europe/Berlin
-      LC_ALL: de_DE.UTF-8
-      APP_USER_ID: 1000
-      APP_GROUP_ID: 1000
-      PHP_ENV: development
-      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php56/"
-      XDEBUG_CONFIG: ""
-      XDEBUG_REMOTE_HOST: 192.168.178.19
-    networks:
-      net:
-        ipv4_address: 172.16.238.11
-
-  php73:
-    image: degobbis/php73-fpm-alpine:latest
-    container_name: docker-lamp_php73
-    hostname: php73
-    links:
-      - bind
-      - mailhog
-      - mariadb105
-    volumes:
-      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
-      - ./.config/php/php73/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
-      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
-      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
-      - /srv:/srv:rw
-      - phpsocket:/run/php
-    environment:
-      TZ: Europe/Berlin
-      LC_ALL: de_DE.UTF-8
-      APP_USER_ID: 1000
-      APP_GROUP_ID: 1000
-      PHP_ENV: development
-      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php73/"
-      XDEBUG_CONFIG: ""
-      XDEBUG_REMOTE_HOST: 192.168.178.19
-    networks:
-      net:
-        ipv4_address: 172.16.238.12
-
   php74:
     image: degobbis/php74-fpm-alpine:latest
     container_name: docker-lamp_php74
     hostname: php74
     links:
-      - bind
       - mailhog
       - mariadb105
     volumes:
@@ -153,7 +106,6 @@ services:
     container_name: docker-lamp_php80
     hostname: php80
     links:
-      - bind
       - mailhog
       - mariadb105
     volumes:
@@ -176,77 +128,3 @@ services:
     networks:
       net:
         ipv4_address: 172.16.238.14
-
-  mariadb105:
-    image: degobbis/mariadb105-alpine:latest
-    container_name: docker-lamp_db
-    hostname: mysql
-    links:
-      - bind
-    volumes:
-      - db-data:/var/lib/mysql
-      - /srv/initDB:/docker-entrypoint-initdb.d
-    environment:
-      TZ: Europe/Berlin
-      LC_ALL: de_DE.UTF-8
-      MYSQL_ROOT_PASSWORD: M0ntag
-      APP_USER_ID: 1000
-      APP_GROUP_ID: 1000
-    ports:
-      - "3306:3306"
-    networks:
-      net:
-        ipv4_address: 172.16.238.15
-
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: docker-lamp_mailhog
-    hostname: mailhog
-    links:
-      - bind
-    ports:
-      - "8025:8025"
-      - "1025:1025"
-    networks:
-      net:
-        ipv4_address: 172.16.238.16
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:fpm-alpine
-    container_name: docker-lamp_phpmyadmin
-    hostname: phpmyadmin
-    links:
-      - bind
-      - mariadb105
-    volumes:
-      - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
-      - pma:/var/www/html
-    environment:
-      TZ: Europe/Berlin
-      LC_ALL: de_DE.UTF-8
-      PMA_HOST: mysql
-      PMA_PORT: 3306
-      MAX_EXECUTION_TIME: 600
-      MEMORY_LIMIT: 512M
-      UPLOAD_LIMIT: 512M
-      MYSQL_ROOT_PASSWORD: M0ntag
-    networks:
-      net:
-        ipv4_address: 172.16.238.17
-
-volumes:
-  pma:
-  db-data:
-  phpsocket:
-
-networks:
-  net:
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: "net"
-      com.docker.network.enable_ipv6: "false"
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
