@@ -1,5 +1,4 @@
 version: '3'
-
 volumes:
   pma:
   db-data-dir:
@@ -17,4 +16,4 @@ networks:
         - subnet: 172.16.238.0/24
           gateway: 172.16.238.1
 
-service:
+services:

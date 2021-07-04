@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Define debug mode.
-DEBUG=1
+DEBUG=0
 
 # Define the basedir for the docker compose.
 DOCKER_COMPOSE_BASEDIR="$(dirname "$(realpath $0)")"
@@ -14,66 +14,66 @@ DOCKER_COMPOSE_BASEDIR="$(dirname "$(realpath $0)")"
 
 # Define the basedir for the .env file
 ENV_FILE_BASEDIR="$(pwd)"
+ENV_FILE="$ENV_FILE_BASEDIR/.env"
 
-if [ -f "$ENV_FILE_BASEDIR/.env" ]
+if [ -f "$ENV_FILE" ]
 then
     # Load the user configuration
-    . $ENV_FILE_BASEDIR/.env
+    . $ENV_FILE
 else
     error "No '.env' file found in '$ENV_FILE_BASEDIR'!"
-    warn "Please copy '$DOCKER_COMPOSE_BASEDIR/.env-example' to '$ENV_FILE_BASEDIR/.env' and define Your preferred configuration,"
+    warn "Please copy '$DOCKER_COMPOSE_BASEDIR/.env-example' to '$ENV_FILE' and define Your preferred configuration,"
     warn "or change to the directory, where the '.env' file is."
     exit 1
 fi
 
-DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE_BASEDIR/.env -f $ENV_FILE_BASEDIR/final.yml"
+DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
+DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
+
+MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
-    start|restart|stop|halt|backup-db|update-images|delete-obsolete-images)
+    *)
+        [ "$1" = "--help" ] && usage
+        [ "$2" = "--help" ] && usage $1
+        ;;&
+    start|restart|stop|shutdown|update-images|delete-obsolete-images)
         COMMAND="$1"
         ARGUMENT=""
         shift 1
         ;;&
-    start|restart)
-        LONG="php: httpd: db: map-80-443: bind-off bind-on help"
+    start)
+        LONG="php: httpd: db: map-80-443: bind-off bind-on"
         SHORT="p: H: d: m:"
         ;;
-    stop)
-        LONG="backup-folder: archive help"
-        SHORT="b: a"
+    shutdown)
+        LONG="archive-folder: archive skip-save-db"
+        SHORT="f: a s"
         ;;
-    halt)
-        LONG="backup-folder: archive help"
-        SHORT="b: a"
-        ;;
-    backup-db)
-        LONG="php: httpd: db: bind-off help"
-        SHORT="p: h: d: h"
-        ;;
-    update-images)
-        LONG="php: httpd: db: bind-off help"
-        SHORT="p: h: d: h"
-        ;;
-    delete-obsolete-images)
-        LONG="php: httpd: db: bind-off help"
-        SHORT="p: h: d: h"
-        ;;
+    save-db)
+        COMMAND="$1"
+        ARGUMENT="$2"
+        LONG="archive-folder: archive"
+        SHORT="f: a s"
+        shift 2
+       ;;
     cli)
-        COMMAND=$1
-        ARGUMENT=$2
+        COMMAND="$1"
+        ARGUMENT="$2"
         SHORT="1:,2::"
         LONG="test1:,test2::"
         shift 2
         ;;
-    --help)
-        usage
-        exit 0
-       ;;
 esac
 
-[ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 -h|--help'." && exit 1
+[ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
 
+[ "$COMMAND" = "restart" ] && restart_server && exit 0
+[ "$COMMAND" = "stop" ] && stop_server && exit 0
+[ "$COMMAND" = "update-images" ] && docker-compose -f $DOCKER_COMPOSE_BASEDIR/.config/update-images.yml pull && exit 0
+[ "$COMMAND" = "delete-obsolete-images" ] && delete_obsolete_images && exit 0
+[ "$COMMAND" = "start" ] && ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ ! -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) && error "Server is already running." && exit 1
 
 headline "----------------------"
 log "COMMAND: $COMMAND"
@@ -114,13 +114,9 @@ while true; do
 
     if [ -z "${CASE##*$1*}" ] ;then
          case "$1" in
-            --help)
-                usage $COMMAND
-                exit 0
-               ;;
             -H | --httpd)
-                HTTPD="$2"
-                log "set HTTPD to '$2'"
+                HTTPD_TO_USE="$2"
+                log "set HTTPD_TO_USE to '$2'"
                 shift 2
                 ;;
             -p | --php)
@@ -138,17 +134,21 @@ while true; do
                 log "set BIND off"
                 shift
                 ;;
+            -s | --skip-save-db)
+                SKIP_SAVE_DATABASES=1
+                shift
+                ;;
             -a | --archive)
                 ARCHIVE_DATABASES=1
                 shift
                 ;;
-            -b | --backup-folder)
+            -f | --archive-folder)
                 ARCHIVE_FOLDER="$2"
                 log "set ARCHIVE_FOLDER to '$2'"
                 shift 2
                 ;;
-            -c | --config)
-                _config="$2"
+            -d | --db)
+                DATABASE_TO_USE="$2"
                 shift 2
                 ;;
             -s | --source)
@@ -187,12 +187,15 @@ done
     warn "For help call '$0 -h|--help'." && \
     exit 1
 
+[ "$COMMAND" = "shutdown" ] && shutdown_server && exit 0
+
+
 PHP_TO_USE=$(echo "$PHP_TO_USE" | sed "s/, / /g" | sed "s/,/ /g")
 
 headline "after editing the parameters"
 log "\$@:" "$@"
 log "\$1: $1"
-log "HTTPD: $HTTPD"
+log "HTTPD_TO_USE: $HTTPD_TO_USE"
 log "PHP_TO_USE: $PHP_TO_USE"
 
 MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
@@ -208,7 +211,7 @@ HTTPD_PORT_PHP80="8080"
 HTTPD_SSL_PORT_PHP80="8480"
 HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443 8000:8000 8400:8400"
 
-# Define the LOAD_YAML variable with base YAML-Config
+# Define the LOAD_YAML variable with the base YAML-Config
 add_yaml_to_load base
 
 # Add phpmyadmin YAML-Config to LOAD_YAML
@@ -223,6 +226,9 @@ if [ -z "$BIND_OFF" ]; then
     add_yaml_to_load bind
     HTTPD_LINKS_LIST="bind $HTTPD_LINKS_LIST"
 fi
+
+# Add HTTPD YAML-Config to LOAD_YAML
+add_yaml_to_load httpd/$HTTPD_TO_USE
 
 for var in $PHP_TO_USE; do
     PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
@@ -243,15 +249,15 @@ HTTPD_LINKS_LIST="$HTTPD_LINKS_LIST $PHP_TO_USE"
 # Exdend the ports list of the HTTPD container with the custom ports defined
 [ ! -z "$HTTPD_CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $HTTPD_CUSTOM_PORTS"
 
+# Add database YAML-Config to LOAD_YAML
+add_yaml_to_load db/$DATABASE_TO_USE
+
 echo
-log "LOAD_YAML: $LOAD_YAML"
 log "HTTPD_PORTS_LIST: $HTTPD_PORTS_LIST"
 log "HTTPD_LINKS_LIST: $HTTPD_LINKS_LIST"
 
 export HTTPD_PORTS=$(get_yaml_list "$HTTPD_PORTS_LIST")
 export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
-
-BACKUP_FOLDER=$(basename ${_BACKUP_FOLDER:-$(date +%Y%m%d)})
 
 echo
 log "HTTPD_PORTS: $HTTPD_PORTS"
@@ -261,8 +267,8 @@ log "BACKUP_FOLDER: $BACKUP_FOLDER"
 log "APP_BASEDIR: $APP_BASEDIR"
 log "LOAD_YAML: $LOAD_YAML"
 
-rm -f $DOCKER_COMPOSE_BASEDIR/final.yml
-( echo "cat <<EOF > $DOCKER_COMPOSE_BASEDIR/final.yml";
+[ -f "$DOCKER_COMPOSE_YAML" ] && rm -f $DOCKER_COMPOSE_YAML
+( echo "cat <<EOF > $DOCKER_COMPOSE_BASEDIR/compose.yml";
   cat $LOAD_YAML;
   echo "EOF";
 ) > $DOCKER_COMPOSE_BASEDIR/temp.yml
@@ -270,29 +276,12 @@ rm -f $DOCKER_COMPOSE_BASEDIR/final.yml
 rm -f $DOCKER_COMPOSE_BASEDIR/temp.yml
 
 
-MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
-
-
-exit 1
+#exit 1
 #$DOCKER_COMPOSE_BASEDIR/docker-compose.yml
 
 #export HTTPD_PORTS=[$(echo "$HTTPD_PORTS")] && docker-compose up -d --force-recreate
 
-[ "$COMMAND" = "start" ] && $DOCKER_COMPOSE_CALL up -d --force-recreate && exit 0
-
-[ "$COMMAND" = "halt" ] && $DOCKER_COMPOSE_CALL down \
-    && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
-    | grep -v 'db-data' | awk 'NR > 1 {print $2}' \
-    | xargs docker volume rm --force \
-    | xargs echo "Removing volumes:" \
-    && exit 0
-
-[ "$COMMAND" = "stop" ] && $DOCKER_COMPOSE_CALL down \
-    && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
-    | awk 'NR > 1 {print $2}' \
-    | xargs docker volume rm --force \
-    | xargs echo "Removing volumes:" \
-    && exit 0
+[ "$COMMAND" = "start" ] && start_server && exit 0
 
 #docker-compose -f $DOCKER_COMPOSE_BASEDIR/final.yml up -d --force-recreate
 #rm -f $DOCKER_COMPOSE_BASEDIR/tmp_env

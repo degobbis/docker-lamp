@@ -1,4 +1,3 @@
-
   mariadb105:
     image: degobbis/mariadb105-alpine:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db

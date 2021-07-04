@@ -2,11 +2,13 @@
 /data/**
 
 # Docker config files.
-/.env
+/.env*
 /docker-compose.override.yml
+/compose.yml
 
 # Exclutions.
 !/data/**/*.md
+!/.env-example
 #!/data/**/
 
 # IDEs
