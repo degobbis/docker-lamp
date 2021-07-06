@@ -54,7 +54,7 @@ server-down: db-backup ## Stops all docker containers and delete all volumes, sa
 
 
 db-backup: load-env ## Saving all databases.
-	@docker exec -it $(COMPOSE_PROJECT_NAME)_mysql backup-databases
+	@docker exec -it --privileged $(COMPOSE_PROJECT_NAME)_mysql sh -c "/usr/local/bin/backup-databases"
 
 
 update-images: ## Update all images from docker-compose.yml to the latest build.
