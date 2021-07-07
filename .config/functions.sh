@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
+. $DOCKER_COMPOSE_BASEDIR/.config/docker-lamp-completion.bash
+
 usage() {
-    clear
-    echo "$(basename $0) $*"
-    [ ! -z "$1" ] && eval "usage_$1" && exit 0
+    warn "-- Help for the command:" "$(basename $0)" "$*" "--"
     echo
+    [ ! -z "$1" ] && eval "usage_$1" && exit 0
     warn "Usage:"
     success "-> $(basename $0) <command> [<parameters>]"
     echo
@@ -44,13 +45,9 @@ usage() {
 }
 
 usage_start() {
-    DEBUG=1
-    headline "Help for the command: start"
-    echo
     warn "Usage:"
     success "-> $(basename $0) start [<parameters>]"
     echo
-    info "-> Uses 'docker-compose up -d --force-recreate' to start the server."
     info "-> If 'start' is used without parameters, the server is started with the globally defined settings from the '.env' file."
     info "-> If parameters are set, these will override the global settings. The phpmyadmin and mailhog containers always start."
     echo
@@ -84,26 +81,18 @@ usage_start() {
     success "-> $(basename $0) start --php='php74 php80' --httpd='apache24'"
     success "-> $(basename $0) start -p 'php74 php80' -H 'apache24'"
     info "-> Starts the server with php74 and php80, apache24, phpmyadmin, mailhog and the settings defined global in '.env' for db and bind."
-    DEBUG=0
     exit 0
 }
 
 usage_restart() {
-    DEBUG=1
-    headline "Help for $(basename $0) restart"
-    echo
     warn "Usage:"
     success "-> $(basename $0) restart"
     echo
     info "-> Restarts the server with the same configuration as started before."
-    DEBUG=0
     exit 0
 }
 
 usage_shutdown() {
-    DEBUG=1
-    headline "Help for the command: shutdown"
-    echo
     warn "Usage:"
     success "-> $(basename $0) shutdown [<parameters>]"
     echo
@@ -132,14 +121,10 @@ usage_shutdown() {
     echo
     success "-> $(basename $0) stop"
     info "-> Saves all databases into 'initDB' and overwrites each of the existing ones, then stops all containers and deletes all created volumes."
-    DEBUG=0
     exit 0
 }
 
 usage_stop() {
-    DEBUG=1
-    headline "Help for the command: stop"
-    echo
     warn "Usage: $(basename $0) stop"
     echo
     info "-> Stops the server."
@@ -151,7 +136,6 @@ usage_stop() {
     echo
     warn "For more details about how to, use:"
     success "-> $(basename $0) save-db --help"
-    DEBUG=0
     exit 0
 }
 
@@ -271,7 +255,7 @@ start_server() {
     create_certs \
         && warn "Start server:" \
         && $DOCKER_COMPOSE_CALL up -d --force-recreate \
-        && success "Server restarted."
+        && success "Server started."
 }
 
 restart_server() {
@@ -293,9 +277,11 @@ restart_server() {
 
 shutdown_server() {
     ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) \
-        && warn "Server is not running." && exit 0
+        && warn "Server is not running." \
+        && exit 0
 
-    [ -z "$SKIP_SAVE_DATABASES" ] && save_db
+    [ -z "$SKIP_SAVE_DATABASES" ] \
+        && save_db
 
     warn "Shutdown server:" \
         && $DOCKER_COMPOSE_CALL down -v \
@@ -351,17 +337,21 @@ create_certs() {
     [ ! -z "$SSL_LOCALDOMAINS" ] \
         && MINICA_DEFAULT_DOMAINS="$MINICA_DEFAULT_DOMAINS,$SSL_LOCALDOMAINS"
 
-    [ -z "$SSL_DOMAINS" ] \
+    [ ! -z "$SSL_DOMAINS" ] \
         && MINICA_DEFAULT_DOMAINS="$MINICA_DEFAULT_DOMAINS $SSL_DOMAINS"
+
+    MINICA_DEFAULT_DOMAINS="$(echo "$MINICA_DEFAULT_DOMAINS" | sed "s/, /,/g")"
 
     warn "Start creating SSL certificates:"
     for domain in $MINICA_DEFAULT_DOMAINS; do
+        info "Create certificate for:" "$domain"
         docker run --user $APP_USER_ID -it --rm \
             -v "$MINICA_BASEDIR:/certs" \
             degobbis/minica \
             --ca-cert minica-root-ca.pem \
             --ca-key minica-root-ca-key.pem \
             --domains $domain
+        echo
     done
 
     success "All certificates created."
