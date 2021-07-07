@@ -238,6 +238,7 @@ add_yaml_to_load() {
         warn "and '$DOCKER_COMPOSE_BASEDIR/.config/$CONTAINER_PATH/config.yml'"
         exit 1
     fi
+
     log_s "$CONTAINER_PATH YAML loaded."
 }
 
@@ -252,9 +253,9 @@ get_yaml_list() {
 }
 
 start_server() {
-    create_certs \
-        && warn "Start server:" \
-        && $DOCKER_COMPOSE_CALL up -d --force-recreate \
+    create_certs
+    warn "Start server:"
+    $DOCKER_COMPOSE_CALL up -d --force-recreate \
         && success "Server started."
 }
 
@@ -263,15 +264,15 @@ restart_server() {
         && warn "Server is not running." && exit 0
 
     warn "Stop server:"
-    $DOCKER_COMPOSE_CALL down \
-        && warn "Removing volumes:" \
-        && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
+    $DOCKER_COMPOSE_CALL down
+    warn "Removing volumes:"
+    docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
         | grep -v 'db-data-dir' | awk 'NR > 1 {print $2}' \
         | xargs docker volume rm --force \
-        | xargs echo "Volumes removed:" \
-        && create_certs \
-        && warn "Start server:" \
-        && $DOCKER_COMPOSE_CALL up -d --force-recreate \
+        | xargs echo "Volumes removed:"
+    create_certs
+    warn "Start server:"
+    $DOCKER_COMPOSE_CALL up -d --force-recreate \
         && success "Server restarted."
 }
 
@@ -281,11 +282,12 @@ shutdown_server() {
         && exit 0
 
     [ -z "$SKIP_SAVE_DATABASES" ] \
-        && save_db
+        && save_db \
+        || success "Skip save database(s)."
 
-    warn "Shutdown server:" \
-        && $DOCKER_COMPOSE_CALL down -v \
-        && success "Server shut down."
+    warn "Shutdown server:"
+    $DOCKER_COMPOSE_CALL down -v
+    success "Server shut down."
 }
 
 stop_server() {
@@ -293,25 +295,25 @@ stop_server() {
         && warn "Server is not running." && exit 0
 
     warn "Stop server:"
-    $DOCKER_COMPOSE_CALL down \
-        && warn "Removing volumes:" \
-        && docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
+    $DOCKER_COMPOSE_CALL down
+    warn "Removing volumes:"
+    docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
         | grep -v 'db-data-dir' | awk 'NR > 1 {print $2}' \
         | xargs docker volume rm --force \
-        | xargs echo "Volumes removed:" \
-        && success "Server is stoped."
+        | xargs echo "Volumes removed:"
+    success "Server is stoped."
 }
 
 save_db() {
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
-        && warn "Server '$DATABASE_TO_USE' is not running." && exit 0
+        && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
 
     local envs=""
     [ "$ARCHIVE_DATABASES" -eq 1 ] && env="-e ARCHIVE=1 "
     [ ! -z "$ARCHIVE_FOLDER" ] && env="${env}-e ARCHIVE_FOLDER=$ARCHIVE_FOLDER "
 
     warn "Save databases:"
-    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_${DATABASE_TO_USE} sh -c "/usr/local/bin/backup-databases"
+    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env sh -c "/usr/local/bin/backup-databases"
 }
 
 delete_obsolete_images() {

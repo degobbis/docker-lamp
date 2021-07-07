@@ -44,7 +44,7 @@ case "$1" in
         [ "$1" = "--help" ] && usage | more -d && exit 0
         [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         ;;&
-    start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images)
+    start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images|save-db|cli)
         COMMAND="$1"
         ARGUMENT=""
         shift 1
@@ -58,51 +58,51 @@ case "$1" in
         SHORT="f: a s"
         ;;
     save-db)
-        COMMAND="$1"
-        ARGUMENT="$2"
+        ARGUMENT="$1"
         LONG="archive-folder: archive"
-        SHORT="f: a s"
-        shift 2
+        SHORT="f: a"
+        shift 1
        ;;
     cli)
-        COMMAND="$1"
-        ARGUMENT="$2"
+        ARGUMENT="$1"
         SHORT="1:,2::"
         LONG="test1:,test2::"
-        shift 2
+        shift 1
         ;;
 esac
 
 [ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
 
-[ "$COMMAND" = "start" ] \
-    && ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ ! -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) \
-    && error "Server is already running." \
-    && exit 1
+if [ "$COMMAND" = "start" ] \
+    && ([ -f "$DOCKER_COMPOSE_YAML" ] && [ ! -z "$($DOCKER_COMPOSE_CALL ps -q)" ]); then
+        error "Server is already running."
+        exit 1
+fi
 
-[ "$COMMAND" = "restart" ] \
-    && restart_server \
-    && exit 0
+if [ "$COMMAND" = "restart" ]; then
+    restart_server
+    exit 0
+fi
 
-[ "$COMMAND" = "stop" ] \
-    && stop_server \
-    && exit 0
+if [ "$COMMAND" = "stop" ]; then
+    stop_server
+    exit 0
+fi
 
-[ "$COMMAND" = "shutdown" ] \
-    && shutdown_server \
-    && exit 0
+if [ "$COMMAND" = "create-certs" ]; then
+    create_certs
+    exit 0
+fi
 
-[ "$COMMAND" = "create-certs" ] \
-    && create_certs \
-    && exit 0
+if [ "$COMMAND" = "update-images" ]; then
+    docker-compose -f $DOCKER_COMPOSE_BASEDIR/.config/update-images.yml pull
+    exit 0
+fi
 
-[ "$COMMAND" = "update-images" ] \
-    && docker-compose -f $DOCKER_COMPOSE_BASEDIR/.config/update-images.yml pull \
-    && exit 0
-
-[ "$COMMAND" = "delete-obsolete-images" ] \
-    && delete_obsolete_images \
-    && exit 0
+if [ "$COMMAND" = "delete-obsolete-images" ]; then
+    delete_obsolete_images
+    exit 0
+fi
 
 headline "----------------------"
 log "COMMAND: $COMMAND"
@@ -117,7 +117,13 @@ log "\$1: $1"
 log "\$2: $2"
 
 OPTIONS=$(getopt -q -o "$SHORT" -l "$LONG" -n "$0" -- "$@")
-[ "$?" -eq 1 ] && error "The parameter" "$@" "is not set correctly!" && warn "For help call '$0 -h|--help'." && exit 1
+
+if [ "$?" -eq 1 ]; then
+    error "The parameter" "$@" "is not set correctly!"
+    warn "For help call '$0 --help'."
+    exit 1
+fi
+
 log "\$OPTIONS: $OPTIONS"
 
 eval set -- "$OPTIONS"
@@ -211,13 +217,21 @@ while true; do
     fi
 done
 
-[ -n "$1" ] && \
-    error "The argument '$1' is not allowed at this place!" && \
-    warn "For help call '$0 -h|--help'." && \
+if [ -n "$1" ]; then
+    error "The argument '$1' is not allowed at this place!"
+    warn "For help call '$0 --help'."
     exit 1
+fi
 
-[ "$COMMAND" = "shutdown" ] && shutdown_server && exit 0
+if [ "$COMMAND" = "save-db" ]; then
+    save_db
+    exit 0
+fi
 
+if [ "$COMMAND" = "shutdown" ]; then
+    shutdown_server
+    exit 0
+fi
 
 PHP_TO_USE=$(echo "$PHP_TO_USE" | sed "s/, / /g" | sed "s/,/ /g")
 
@@ -306,11 +320,8 @@ rm -f $DOCKER_COMPOSE_BASEDIR/temp.yml
 
 
 #exit 1
-#$DOCKER_COMPOSE_BASEDIR/docker-compose.yml
 
-#export HTTPD_PORTS=[$(echo "$HTTPD_PORTS")] && docker-compose up -d --force-recreate
-
-[ "$COMMAND" = "start" ] && start_server && exit 0
-
-#docker-compose -f $DOCKER_COMPOSE_BASEDIR/final.yml up -d --force-recreate
-#rm -f $DOCKER_COMPOSE_BASEDIR/tmp_env
+if [ "$COMMAND" = "start" ]; then
+    start_server
+    exit 0
+fi
