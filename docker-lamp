@@ -4,10 +4,10 @@
 DEBUG=0
 
 # Define the basedir for the docker compose.
-DOCKER_COMPOSE_BASEDIR="$(dirname "$(realpath $0)")"
+DOCKER_LAMP_BASEDIR="$(dirname "$(realpath $0)")"
 
 # Load the functions for the script
-. $DOCKER_COMPOSE_BASEDIR/.config/functions.sh
+. $DOCKER_LAMP_BASEDIR/.config/functions.sh
 
 # If called without command, return help and exit.
 [ "$#" -eq 0 ] && usage | more -d && exit 1
@@ -16,8 +16,7 @@ DOCKER_COMPOSE_BASEDIR="$(dirname "$(realpath $0)")"
 ENV_FILE_BASEDIR="$(pwd)"
 ENV_FILE="$ENV_FILE_BASEDIR/.env"
 
-if [ -f "$ENV_FILE" ]
-then
+if [ -f "$ENV_FILE" ]; then
     ENV_FILE_LOADED="$(. $ENV_FILE 2>&1)"
 
     [ ! -z "$ENV_FILE_LOADED" ] && error "Something is wrong in the '.env' file!" \
@@ -28,7 +27,7 @@ then
     . $ENV_FILE
 else
     error "No '.env' file found in '$ENV_FILE_BASEDIR'!"
-    warn "Please copy '$DOCKER_COMPOSE_BASEDIR/.env-example' to '$ENV_FILE' and define Your preferred configuration,"
+    warn "Please copy '$DOCKER_LAMP_BASEDIR/.env-example' to '$ENV_FILE' and define Your preferred configuration,"
     warn "or change to the directory, where the '.env' file is."
     exit 1
 fi
@@ -95,7 +94,7 @@ if [ "$COMMAND" = "create-certs" ]; then
 fi
 
 if [ "$COMMAND" = "update-images" ]; then
-    docker-compose -f $DOCKER_COMPOSE_BASEDIR/.config/update-images.yml pull
+    update_images
     exit 0
 fi
 
@@ -305,18 +304,18 @@ export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
 echo
 log "HTTPD_PORTS: $HTTPD_PORTS"
 log "HTTPD_LINKS: $HTTPD_LINKS"
-log "DOCKER_COMPOSE_BASEDIR: $DOCKER_COMPOSE_BASEDIR"
+log "DOCKER_LAMP_BASEDIR: $DOCKER_LAMP_BASEDIR"
 log "BACKUP_FOLDER: $BACKUP_FOLDER"
 log "APP_BASEDIR: $APP_BASEDIR"
 log "LOAD_YAML: $LOAD_YAML"
 
 [ -f "$DOCKER_COMPOSE_YAML" ] && rm -f $DOCKER_COMPOSE_YAML
-( echo "cat <<EOF > $DOCKER_COMPOSE_BASEDIR/compose.yml";
+( echo "cat <<EOF > $DOCKER_LAMP_BASEDIR/compose.yml";
   cat $LOAD_YAML;
   echo "EOF";
-) > $DOCKER_COMPOSE_BASEDIR/temp.yml
-. $DOCKER_COMPOSE_BASEDIR/temp.yml
-rm -f $DOCKER_COMPOSE_BASEDIR/temp.yml
+) > $DOCKER_LAMP_BASEDIR/temp.yml
+. $DOCKER_LAMP_BASEDIR/temp.yml
+rm -f $DOCKER_LAMP_BASEDIR/temp.yml
 
 
 #exit 1

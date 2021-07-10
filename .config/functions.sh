@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. $DOCKER_COMPOSE_BASEDIR/.config/docker-lamp-completion.bash
+. $DOCKER_LAMP_BASEDIR/.config/docker-lamp-completion.bash
 
 usage() {
     warn "-- Help for the command:" "$(basename $0)" "$*" "--"
@@ -229,13 +229,13 @@ add_yaml_to_load() {
 
     if [ -f "$APP_BASEDIR/$CONTAINER_PATH/config.yml" ]; then
         LOAD_YAML="$YAML_LIST_TO_LOAD $APP_BASEDIR/$CONTAINER_PATH/config.yml"
-    elif [ -f "$DOCKER_COMPOSE_BASEDIR/.config/$CONTAINER_PATH/config.yml" ]; then
-        LOAD_YAML="$YAML_LIST_TO_LOAD $DOCKER_COMPOSE_BASEDIR/.config/$CONTAINER_PATH/config.yml"
+    elif [ -f "$DOCKER_LAMP_BASEDIR/.config/$CONTAINER_PATH/config.yml" ]; then
+        LOAD_YAML="$YAML_LIST_TO_LOAD $DOCKER_LAMP_BASEDIR/.config/$CONTAINER_PATH/config.yml"
     else
         echo
         error "docker-compose configuration file for '$CONTAINER_PATH' not found!"
         warn "Searched for '$APP_BASEDIR/$CONTAINER_PATH/config.yml'"
-        warn "and '$DOCKER_COMPOSE_BASEDIR/.config/$CONTAINER_PATH/config.yml'"
+        warn "and '$DOCKER_LAMP_BASEDIR/.config/$CONTAINER_PATH/config.yml'"
         exit 1
     fi
 
@@ -256,7 +256,8 @@ start_server() {
     create_certs
     warn "Start server:"
     $DOCKER_COMPOSE_CALL up -d --force-recreate \
-        && success "Server started."
+        && success "Server started." \
+        && restore_db
 }
 
 restart_server() {
@@ -357,5 +358,22 @@ create_certs() {
     done
 
     success "All certificates created."
+}
+
+restore_db() {
+    [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
+        && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
+
+    warn "Restore databases:"
+    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_db /usr/bin/env sh -c "/usr/local/bin/restore-databases"
+
+}
+
+update_images() {
+    local yaml_file_for_update="$DOCKER_LAMP_BASEDIR/.config/update-images.yml"
+
+    [ -f "$DOCKER_COMPOSE_YAML" ] && yaml_file_for_update="$DOCKER_COMPOSE_YAML"
+
+    docker-compose -f $yaml_file_for_update pull
 }
 # find . -maxdepth 1 -type f ! -name "*.md" ! -name "*.txt"
