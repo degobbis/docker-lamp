@@ -46,7 +46,7 @@ case "$1" in
     start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images|save-db|cli)
         COMMAND="$1"
         ARGUMENT=""
-        shift 1
+        shift
         ;;&
     start)
         LONG="php: httpd: db: map-80-443: bind-off bind-on"
@@ -58,15 +58,19 @@ case "$1" in
         ;;
     save-db)
         ARGUMENT="$1"
+        shift
         LONG="archive-folder: archive"
         SHORT="f: a"
-        shift 1
        ;;
     cli)
-        ARGUMENT="$1"
-        SHORT="1:,2::"
-        LONG="test1:,test2::"
-        shift 1
+        CLI_CONTAINER="$1"
+        shift
+        COMMAND_TO_PASS="${*:1}"
+        { [ "$1" = "--as-root" ] || [ "$1" = "-r" ]; } && _TMP="$1" && COMMAND_TO_PASS="${*:2}"
+        shift $#
+        [ ! -z "$_TMP" ] && set -- "$_TMP"
+        LONG="as-root"
+        SHORT="r"
         ;;
 esac
 
@@ -106,6 +110,8 @@ fi
 headline "----------------------"
 log "COMMAND: $COMMAND"
 log "ARGUMENT: $ARGUMENT"
+log "CLI_CONTAINER: $CLI_CONTAINER"
+log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 log "SHORT: $SHORT"
 log "LONG: $LONG"
 
@@ -185,25 +191,9 @@ while true; do
                 DATABASE_TO_USE="$2"
                 shift 2
                 ;;
-            -s | --source)
-                _source="$2"
-                shift 2
-                ;;
-            -d | --dest)
-                _target="$2"
-                shift 2
-                ;;
-            -o | --options)
-                _options="$2"
-                shift 2
-                ;;
-            -l | --log)
-                _log="$2"
-                shift 2
-                ;;
-            -e | --exclude)
-                _exclude="$2"
-                shift 2
+            -r | --as-root)
+                AS_ROOT="1"
+                shift
                 ;;
             --)
                 shift
@@ -224,6 +214,11 @@ fi
 
 if [ "$COMMAND" = "save-db" ]; then
     save_db
+    exit 0
+fi
+
+if [ "$COMMAND" = "cli" ]; then
+    cli_container
     exit 0
 fi
 

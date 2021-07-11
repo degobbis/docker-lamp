@@ -36,8 +36,9 @@ usage() {
     warn "delete-obsolete-images"
     info "-> Deletes obsolete images remaining after updated images."
     echo
-    warn "cli <CONTAINER-NAME>"
-    info "-> Uses 'docker-compose down' to stop the server."
+    warn "cli <CONTAINER-NAME> [-r|--as-root] ['<COMMAND-TO-PASS>']"
+    info "-> Uses 'docker exec -it <CONTAINER-NAME>' to launch into the cli in the container, or to execute the passed command."
+    info "-> Use single quotes ' to pass the command to the container to be executed in it."
     echo
     warn "save-db <DB-NAME>"
     info "-> Uses 'docker-compose down' to stop the server."
@@ -253,11 +254,15 @@ get_yaml_list() {
 }
 
 start_server() {
+    local _db_volume_exist=$(docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep "${COMPOSE_PROJECT_NAME}_db-data-dir")
+
     create_certs
+
     warn "Start server:"
     $DOCKER_COMPOSE_CALL up -d --force-recreate \
-        && success "Server started." \
-        && restore_db
+        && success "Server started."
+
+    [ -z "$_db_volume_exist" ] && restore_db
 }
 
 restart_server() {
@@ -376,4 +381,27 @@ update_images() {
 
     docker-compose -f $yaml_file_for_update pull
 }
+
+cli_container() {
+    local params="--user $APP_USER_ID "
+
+    [ -z "$($DOCKER_COMPOSE_CALL ps -q $CLI_CONTAINER)" ] \
+        && warn "The container '$CLI_CONTAINER' is not running." && exit 0
+
+    [ "${AS_ROOT:-0}" -eq 1 ] && params="--privileged "
+
+    headline "Before starting CLI for '$CLI_CONTAINER'"
+    log "params: $params"
+    log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
+
+    [ ! -z "$COMMAND_TO_PASS" ] \
+        && docker exec -it ${params}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh -cx "$COMMAND_TO_PASS" \
+        || docker exec -it ${params}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh
+}
+
+quote () {
+    local quoted=${1//\'/\'\\\'\'};
+    printf "'%s'" "$quoted"
+}
+
 # find . -maxdepth 1 -type f ! -name "*.md" ! -name "*.txt"
