@@ -9,6 +9,17 @@ DOCKER_LAMP_BASEDIR="$(dirname "$(realpath $0)")"
 # Load the functions for the script
 . $DOCKER_LAMP_BASEDIR/.config/functions.sh
 
+# Test if docker ist installed an the deamon is startet
+if [[ "$(command docker >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
+    error "Can't find docker, is it installed?"
+    exit 127
+fi
+
+if [[ "$(docker info >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
+    error "The docker deamon is not running. Please start it before."
+    exit 1
+fi
+
 # If called without command, return help and exit.
 [ "$#" -eq 0 ] && usage | more -d && exit 1
 
