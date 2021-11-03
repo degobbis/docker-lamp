@@ -385,18 +385,25 @@ update_images() {
 cli_container() {
     local params="--user $APP_USER_ID "
 
+    # TODO: Set it only on CLI call for CLI debugging
+    local env=' -e XDEBUG_CONFIG= '
+
+    [ "$CLI_CONTAINER" = "php80" ] && env+=' -e XDEBUG_SESSION=1 '
+
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $CLI_CONTAINER)" ] \
         && warn "The container '$CLI_CONTAINER' is not running." && exit 0
 
     [ "${AS_ROOT:-0}" -eq 1 ] && params="--privileged "
+    [ "${CLI_WITH_XDEBUG:-0}" -eq 0 ] && env=""
 
     headline "Before starting CLI for '$CLI_CONTAINER'"
+    log "env: $env"
     log "params: $params"
     log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 
     [ ! -z "$COMMAND_TO_PASS" ] \
-        && docker exec -it ${params}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh -cx "$COMMAND_TO_PASS" \
-        || docker exec -it ${params}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh
+        && docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh -cx "$COMMAND_TO_PASS" \
+        || docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh
 }
 
 quote () {

@@ -76,12 +76,24 @@ case "$1" in
     cli)
         CLI_CONTAINER="$1"
         shift
-        COMMAND_TO_PASS="${*:1}"
-        { [ "$1" = "--as-root" ] || [ "$1" = "-r" ]; } && _TMP="$1" && COMMAND_TO_PASS="${*:2}"
+        case "$#" in
+            1)
+                COMMAND_TO_PASS="${*:1}"
+                shift $#
+                ;;
+            2)
+                COMMAND_TO_PASS="${*:2}"
+                _TMP="$1"
+                ;;
+            3)
+                COMMAND_TO_PASS="${*:3}"
+                _TMP="$1 $2"
+                ;;
+        esac
         shift $#
-        [ ! -z "$_TMP" ] && set -- "$_TMP"
-        LONG="as-root"
-        SHORT="r"
+        [ ! -z "$_TMP" ] && set -- $_TMP
+        LONG="as-root xdebug"
+        SHORT="r x"
         ;;
 esac
 
@@ -204,6 +216,12 @@ while true; do
                 ;;
             -r | --as-root)
                 AS_ROOT="1"
+                log "enter CLI as root"
+                shift
+                ;;
+            -x | --xdebug)
+                CLI_WITH_XDEBUG="1"
+                log "enter CLI with xDebug enabled"
                 shift
                 ;;
             --)

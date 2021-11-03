@@ -19,8 +19,6 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php80/"
-      XDEBUG_CONFIG: ""
-      XDEBUG_SESSION: 1
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
