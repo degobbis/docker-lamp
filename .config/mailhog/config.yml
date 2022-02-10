@@ -7,4 +7,4 @@
       - "1025:1025"
     networks:
       net:
-        ipv4_address: 172.16.238.16
+        ipv4_address: 172.16.238.9

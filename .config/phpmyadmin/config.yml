@@ -18,4 +18,4 @@
       MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
     networks:
       net:
-        ipv4_address: 172.16.238.17
+        ipv4_address: 172.16.238.7

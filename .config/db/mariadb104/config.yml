@@ -16,4 +16,4 @@
       - "3306:3306"
     networks:
       net:
-        ipv4_address: 172.16.238.15
+        ipv4_address: 172.16.238.8
