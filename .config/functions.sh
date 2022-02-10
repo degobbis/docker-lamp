@@ -30,8 +30,8 @@ usage() {
     info "-> Likewise, the files in the 'initDB' folder are ignored by the next start."
     echo
     warn "update-images"
-    info "-> Downloads the newest images globaly defined in the '.env' file, or set in the parameters."
-    info "-> If parameters are set, these will override the global settings. The nwe images will be taged al latest."
+    info "-> Downloads the newest images globally defined in the '.env' file, or set in the parameters."
+    info "-> If parameters are set, these will override the global settings. The new images will be tagged all latest."
     echo
     warn "delete-obsolete-images"
     info "-> Deletes obsolete images remaining after updated images."
@@ -69,10 +69,10 @@ usage_start() {
     info "-> Use the service name from the yaml file defined for the php version You want to map the default browser ports (80 and 443) for, like 'php74'."
     echo
     warn "--bind-on"
-    info "-> If set, it will override the global configurtation in '.env' to 'USE_BIND=1'"
+    info "-> If set, it will override the global configuration in '.env' to 'USE_BIND=1'"
     echo
     warn "--bind-off"
-    info "-> If set, it will override the global configurtationin '.env' to 'USE_BIND=0'"
+    info "-> If set, it will override the global configuration in '.env' to 'USE_BIND=0'"
     echo
     warn "--help"
     info "-> Show this help."
@@ -110,7 +110,7 @@ usage_shutdown() {
     warn "-a, --archive"
     info "-> A copy of all databases is additionally archived in the subfolder within 'initDB' specified with the '-b or --backup-folder=' parameter."
     info "-> If this parameter is not set, the databases are archived by default in a subfolder, with the current date as name, in this format 'yyyy-mm-dd'."
-    info "-> If set, it will override the global configurtation in '.env' to 'ARCHIVE_DATABASES=1'"
+    info "-> If set, it will override the global configuration in '.env' to 'ARCHIVE_DATABASES=1'"
     echo
     warn "-b, --backup-folder="
     info "-> Set the subfolder within 'initDB', all databases will be archives into."
