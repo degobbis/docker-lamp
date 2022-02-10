@@ -1,15 +1,18 @@
 # App data.
-/data/**
+/data/**/*.conf
+/data/**/*.ini
+
+# Exclutions
+!/data/phpinfo/index.php
+!/data/**/*.md
+!/.env-example
+
+# App data.
 
 # Docker config files.
 /.env*
 /docker-compose.override.yml
 /compose.yml
-
-# Exclutions.
-!/data/**/*.md
-!/.env-example
-#!/data/**/
 
 # IDEs
 .idea
