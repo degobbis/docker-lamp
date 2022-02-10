@@ -1,15 +1,15 @@
-  php56:
-    image: degobbis/php56-fpm-alpine:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_php56
-    hostname: php56
+  php81:
+    image: degobbis/php81-fpm-alpine:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php81
+    hostname: php81
     links:
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
       - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
-      - ./.config/php/php56/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ./.config/php/php81/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
-      - ./.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
+      - ./.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
       - ${APP_BASEDIR:-./data}:/srv:rw
       - phpsocket:/run/php
     environment:
@@ -17,9 +17,9 @@
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-      PHP_ENV: ${PHP_ENV:-production}
-      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php56/"
+      PHP_ENV: ${PHP_ENV:-development}
+      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/php81/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
     networks:
       net:
-        ipv4_address: 172.16.238.11
+        ipv4_address: 172.16.238.15

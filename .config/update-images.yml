@@ -19,8 +19,17 @@ services:
   php80:
     image: degobbis/php80-fpm-alpine:latest
 
+  php81:
+    image: degobbis/php81-fpm-alpine:latest
+
+  mariadb104:
+    image: degobbis/mariadb104-alpine:latest
+
   mariadb105:
     image: degobbis/mariadb105-alpine:latest
+
+  mariadb106:
+    image: degobbis/mariadb106-alpine:latest
 
   mailhog:
     image: mailhog/mailhog:latest
