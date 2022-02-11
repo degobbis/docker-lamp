@@ -30,6 +30,8 @@ $ docker-lamp shutdown
 ### Use browser to browse
 - http://localhost:8000 - phpmyadmin
 - http://localhost:8025 - mailhog webmail
+- http://localhost/ - uses the PHP version configured as default
+- https://localhost/ - uses the PHP version configured as default
 - http://localhost:8074 - website using PHP7.4
 - http://localhost:8074/phpinfo/ - PHP config of the PHP7.4 environment 
 - http://localhost:8080 - website using PHP8.0
