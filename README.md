@@ -13,6 +13,7 @@ When starting up docker-lamp it will:
 
 ## Documentation
 Installation: https://blog.astrid-guenther.de/en/ubuntu-docker-lamp-einrichten/
+The blog describes how to use the previous version (main branch) and needs to be revised for version 2.0 (branch 2.0.0-dev). In any case, the section "Possible errors - ERROR: for docker-lamp_bind Cannot start service bind" is helpful.
 
 ### Main commands
 
