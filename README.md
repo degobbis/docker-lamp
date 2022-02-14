@@ -23,9 +23,37 @@ $ docker-lamp start
 ```
 
 #### Stop
-Shutdown and automatically create an .sql image of the databases 
+Shutdown and automatically create an .sql image of the databases
 ```
 $ docker-lamp shutdown
+```
+
+### Advanced commands
+
+#### Enter CLI mode in docker container
+```
+$ docker-lamp cli php80
+```
+to run commands like ``composer`` from the docker CLI 
+```
+php80:/srv/www/joomla/joomla-cms$ composer install 
+```
+
+#### Enter CLI mode as root in docker container
+```
+$ docker exec -u 0 -it docker-lamp_php80 sh
+```
+to install the nodejs library to run commands like ``npm`` on the docker CLI
+```
+php80:/srv/www# apk add nodejs npm 
+```
+so that you can use  
+```
+$ docker-lamp cli php80
+```
+to run commands like ``npm ci`` from the docker CLI
+```
+php80:/srv/www/joomla/joomla-cms$ npm ci 
 ```
 
 ### Use browser to browse
