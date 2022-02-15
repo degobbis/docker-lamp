@@ -76,21 +76,16 @@ case "$1" in
     cli)
         CLI_CONTAINER="$1"
         shift
-        case "$#" in
-            1)
-                COMMAND_TO_PASS="${*:1}"
-                shift $#
-                ;;
-            2)
-                COMMAND_TO_PASS="${*:2}"
-                _TMP="$1"
-                ;;
-            3)
-                COMMAND_TO_PASS="${*:3}"
-                _TMP="$1 $2"
-                ;;
-        esac
-        shift $#
+        _TMP=""
+        while [ ! -z "$1" ]; do
+            if [[ $1 == -* ]]; then
+                _TMP="$_TMP $1"
+            else
+                COMMAND_TO_PASS="$1"
+            fi
+            shift
+        done
+        _TMP=$(echo "$_TMP" | xargs)
         [ ! -z "$_TMP" ] && set -- $_TMP
         LONG="as-root xdebug"
         SHORT="r x"
@@ -175,7 +170,7 @@ while true; do
     log "--------------"
     log "Parameter: $1"
 
-    if [ -z "${CASE##*$1*}" ] ;then
+    if [ -z "${CASE##*$1*}" ]; then
          case "$1" in
             -H | --httpd)
                 HTTPD_TO_USE="$2"
