@@ -36,7 +36,7 @@ usage() {
     warn "delete-obsolete-images"
     info "-> Deletes obsolete images remaining after updated images."
     echo
-    warn "cli <CONTAINER-NAME> [-r|--as-root] ['<COMMAND-TO-PASS>']"
+    warn "cli <CONTAINER-NAME> [<parameters>][ '<COMMAND-TO-PASS>']"
     info "-> Uses 'docker exec -it <CONTAINER-NAME>' to launch into the cli in the container, or to execute the passed command."
     info "-> Use single quotes ' to pass the command to the container to be executed in it."
     echo
@@ -137,6 +137,33 @@ usage_stop() {
     echo
     warn "For more details about how to, use:"
     success "-> $(basename $0) save-db --help"
+    exit 0
+}
+
+usage_cli() {
+    warn "Usage: $(basename $0) cli"
+    echo
+    warn "cli <CONTAINER-NAME> [<parameters>][ '<COMMAND-TO-PASS>']"
+    info "-> Uses 'docker exec -it <CONTAINER-NAME>' to launch into the cli in the container, or to execute the passed command."
+    info "-> Use single quotes ' to pass the command to the container to be executed in it."
+    echo
+    echo
+    warn "Parameters:"
+    echo
+    warn "-r, --as-root"
+    info "-> If this option is set, the cli is startet as root, elsewhere as user."
+    echo
+    warn "-x, --xdebug"
+    info "-> Launch into cli with xdebug enabled."
+    echo
+    echo
+    info_b "Example:"
+    success "-> $(basename $0) cli php80 -r 'apk add nodejs npm'"
+    info "-> This will install in the 'php80' container the packages 'nodejs' and 'npm'."
+    echo
+    info_b "Same as:"
+    success "-> $(basename $0) cli php80 -r"
+    info "-> php80:/srv/www# add apk nodejs npm"
     exit 0
 }
 
