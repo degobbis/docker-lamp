@@ -1,5 +1,5 @@
   mariadb106:
-    image: degobbis/mariadb105-alpine:latest
+    image: degobbis/mariadb106-alpine:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db
     hostname: mysql
     volumes:
