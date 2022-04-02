@@ -345,8 +345,15 @@ save_db() {
     [ "$ARCHIVE_DATABASES" -eq 1 ] && env="-e ARCHIVE=1 "
     [ ! -z "$ARCHIVE_FOLDER" ] && env="${env}-e ARCHIVE_FOLDER=$ARCHIVE_FOLDER "
 
+    local shell="sh"
+    case "$DATABASE_TO_USE" in
+        mysql57|mysql80)
+            shell="bash"
+            ;;
+    esac
+
     warn "Save databases:"
-    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env sh -c "/usr/local/bin/backup-databases"
+    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/backup-databases"
 }
 
 delete_obsolete_images() {
@@ -396,8 +403,15 @@ restore_db() {
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
         && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
 
+    local shell="sh"
+    case "$DATABASE_TO_USE" in
+        mysql57|mysql80)
+            shell="bash"
+            ;;
+    esac
+
     warn "Restore databases:"
-    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_db /usr/bin/env sh -c "/usr/local/bin/restore-databases"
+    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
 
 }
 
@@ -411,26 +425,39 @@ update_images() {
 
 cli_container() {
     local params="--user $APP_USER_ID "
+    local container_name="$CLI_CONTAINER"
+    local shell="sh"
 
     # TODO: Set it only on CLI call for CLI debugging
     local env=' -e XDEBUG_CONFIG= '
 
     [ "$CLI_CONTAINER" = "php80" ] && env+=' -e XDEBUG_SESSION=1 '
 
-    [ -z "$($DOCKER_COMPOSE_CALL ps -q $CLI_CONTAINER)" ] \
+    if [ "$CLI_CONTAINER" = "db" ]; then
+        container_name="$DATABASE_TO_USE"
+
+        case "$DATABASE_TO_USE" in
+            mysql57|mysql80)
+                shell="bash"
+                ;;
+        esac
+    fi
+
+    [ -z "$($DOCKER_COMPOSE_CALL ps -q $container_name)" ] \
         && warn "The container '$CLI_CONTAINER' is not running." && exit 0
 
     [ "${AS_ROOT:-0}" -eq 1 ] && params="--privileged "
     [ "${CLI_WITH_XDEBUG:-0}" -eq 0 ] && env=""
 
     headline "Before starting CLI for '$CLI_CONTAINER'"
+    log "shell: $shell"
     log "env: $env"
     log "params: $params"
     log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 
     [ ! -z "$COMMAND_TO_PASS" ] \
-        && docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh -cx "$COMMAND_TO_PASS" \
-        || docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env sh
+        && docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env ${shell} -cx "$COMMAND_TO_PASS" \
+        || docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env ${shell}
 }
 
 quote () {
