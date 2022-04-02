@@ -54,7 +54,7 @@ case "$1" in
         [ "$1" = "--help" ] && usage | more -d && exit 0
         [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         ;;&
-    start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images|save-db|cli)
+    start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images|save-db|restore-db|cli)
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -122,6 +122,11 @@ fi
 
 if [ "$COMMAND" = "delete-obsolete-images" ]; then
     delete_obsolete_images
+    exit 0
+fi
+
+if [ "$COMMAND" = "restore-db" ]; then
+    restore_db
     exit 0
 fi
 
