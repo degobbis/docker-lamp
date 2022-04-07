@@ -1,0 +1,78 @@
+############################################################
+## Add this to your .htacceess to compress mime types below.
+## Use brotli as the first compression method,
+## gzip is considered a fallback if brotli is not supported.
+############################################################
+
+# Dynamic Brotli compression:
+<IfModule mod_brotli.c>
+	<IfModule mod_filter.c>
+		AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css
+		AddOutputFilterByType BROTLI_COMPRESS application/x-javascript application/javascript application/ecmascript text/javascript application/javascript application/json
+		AddOutputFilterByType BROTLI_COMPRESS application/rss+xml
+		AddOutputFilterByType BROTLI_COMPRESS application/xml
+		AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+		AddOutputFilterByType BROTLI_COMPRESS application/x-font-ttf application/x-font-otf font/woff font/woff2 application/vnd.ms-fontobject image/x-icon
+	</IfModule>
+</IfModule>
+
+# Dynamic gzip compression as fallback:
+<IfModule mod_deflate.c>
+	<IfModule mod_filter.c>
+		AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+		AddOutputFilterByType DEFLATE application/x-javascript application/javascript application/ecmascript text/javascript application/javascript application/json
+		AddOutputFilterByType DEFLATE application/rss+xml
+		AddOutputFilterByType DEFLATE application/xml
+		AddOutputFilterByType DEFLATE image/svg+xml
+		AddOutputFilterByType DEFLATE application/x-font-ttf application/x-font-otf font/woff font/woff2 application/vnd.ms-fontobject image/x-icon
+	</IfModule>
+</IfModule>
+
+<IfModule mod_headers.c>
+	# Static Brotli:
+	# Browser accepts brotli, and matching pre-compressed file exists => rewrite to .br file
+	# For each file format set the correct mime type (otherwise brotli mime type is returned) and prevent Apache for recompressing the files
+	# Not sure why mime is necessary, but that's how apache docs mention this.
+	RewriteCond %{HTTP:Accept-encoding} br
+	RewriteCond %{REQUEST_URI} .*\.(css|html|js|svg)
+	RewriteCond %{REQUEST_FILENAME}.br -s
+	RewriteRule ^(.+) $1.br
+	RewriteRule "\.css\.br$" "-" [T=text/css,E=no-brotli,E=no-gzip]
+	RewriteRule "\.html\.br$" "-" [T=text/html,E=no-brotli,E=no-gzip]
+	RewriteRule "\.js\.br$" "-" [T=application/javascript,E=no-brotli,E=no-gzip]
+	RewriteRule "\.svg\.br$" "-" [T=image/svg+xml,E=no-brotli,E=no-gzip]
+
+	# Static Gzip as fallback:
+	# Browser accepts gzip, and matching pre-compressed file exists => rewrite to .gz file
+	# For each file format set the correct mime type (otherwise brotli mime type is returned) and prevent Apache for recompressing the files
+	# Not sure why mime is necessary, but that's how apache docs mention this.
+	RewriteCond %{HTTP:Accept-Encoding} gzip
+	RewriteCond %{REQUEST_URI} .*\.(css|html|js|svg|)
+	RewriteCond %{REQUEST_FILENAME}.gz -s
+	RewriteRule ^(.+) $1.gz
+	RewriteRule "\.css\.gz$" "-" [T=text/css,E=no-brotli,E=no-gzip]
+	RewriteRule "\.html\.gz$" "-" [T=text/html,E=no-brotli,E=no-gzip]
+	RewriteRule "\.js\.gz$" "-" [T=application/javascript,E=no-brotli,E=no-gzip]
+	RewriteRule "\.svg\.br$" "-" [T=image/svg+xml,E=no-brotli,E=no-gzip]
+
+	<FilesMatch "\.(css|html|js|svg)\.br$">
+		# Correct the encoding type
+		# Let proxy cache brotli & non-brotli separately
+		Header set Content-Encoding br
+		Header append Vary Accept-Encoding
+	</FilesMatch>
+	<FilesMatch "\.(css|html|js|svg)\.gz$">
+		# Serve correct encoding type
+		# Let proxies cache gzip & non-gzip files separately
+		Header set Content-Encoding gzip
+		Header append Vary Accept-Encoding
+	</FilesMatch>
+
+	#Now some content won't benefit from brotli, like already pre-compressed content,
+	#So let us not bother with it
+	SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp)$ no-brotli no-gzip dont-vary
+
+	# Make sure proxies don't deliver the wrong content
+	# It would be ebtter of course if AddOutputFilterByType owuld allow us to set env, but whatever.
+	Header append Vary Accept-Encoding env=!dont-vary
+</IfModule>
