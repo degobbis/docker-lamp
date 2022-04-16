@@ -4,7 +4,7 @@
 DEBUG=0
 
 # Define the basedir for the docker compose.
-DOCKER_LAMP_BASEDIR="$(dirname "$(realpath $0)")"
+DOCKER_LAMP_BASEDIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # Load the functions for the script
 . $DOCKER_LAMP_BASEDIR/.config/functions.sh
@@ -336,12 +336,12 @@ log "APP_BASEDIR: $APP_BASEDIR"
 log "LOAD_YAML: $LOAD_YAML"
 
 [ -f "$DOCKER_COMPOSE_YAML" ] && rm -f $DOCKER_COMPOSE_YAML
-( echo "cat <<EOF > $DOCKER_LAMP_BASEDIR/compose.yml";
+( echo "cat <<EOF > $ENV_FILE_BASEDIR/compose.yml";
   cat $LOAD_YAML;
   echo "EOF";
-) > $DOCKER_LAMP_BASEDIR/temp.yml
-. $DOCKER_LAMP_BASEDIR/temp.yml
-rm -f $DOCKER_LAMP_BASEDIR/temp.yml
+) > $ENV_FILE_BASEDIR/temp.yml
+. $ENV_FILE_BASEDIR/temp.yml
+rm -f $ENV_FILE_BASEDIR/temp.yml
 
 
 #exit 1
