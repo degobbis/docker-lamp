@@ -3,9 +3,9 @@
     container_name: ${COMPOSE_PROJECT_NAME}_db
     hostname: mysql
     volumes:
-      - ./.config/db/mysql80/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
+      - ${DOCKER_LAMP_BASEDIR}/.config/db/mysql80/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
       - db-data-dir:/var/lib/mysql
-      - ${APP_BASEDIR:-./data}/initDB:/docker-entrypoint-initdb.d
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/initDB:/docker-entrypoint-initdb.d
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}

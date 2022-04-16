@@ -6,11 +6,11 @@
       - mailhog
       - ${DATABASE_TO_USE}
     volumes:
-      - ./.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
-      - ./.config/php/php81/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
-      - ./.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
-      - ./.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
-      - ${APP_BASEDIR:-./data}:/srv:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php81/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}

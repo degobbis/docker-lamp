@@ -5,7 +5,7 @@
     links:
       - ${DATABASE_TO_USE}
     volumes:
-      - ./.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
       - pma:/var/www/html
     environment:
       TZ: ${MY_TZ:-UTC}
