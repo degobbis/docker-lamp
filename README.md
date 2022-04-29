@@ -11,6 +11,29 @@ When starting up docker-lamp it will:
 - deploy a local mail server with webmail functionality
 - and create databases from sql scripts from a specified folder
 
+## Requirements
+### MacOS
+- gnu-getopt
+
+Install with Brew
+```
+brew install gnu-getopt
+```
+
+Add to Your PATH variable
+```
+sudo echo 'export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"' >> ~/.bash_profile
+```
+
+And finally add ```FLAGS_GETOPT_CMD```
+```
+sudo echo 'export FLAGS_GETOPT_CMD="/usr/local/opt/gnu-getopt/bin/getopt"' >> ~/.bash_profile
+```
+
+Open a new terminal, or run ```. ~/. bash_profile``` in existing terminal to load changes
+
+Run ```echo $FLAGS_GETOPT_CMD``` to confirm it was actually set in your console
+
 ## Documentation
 Installation: https://blog.astrid-guenther.de/en/ubuntu-docker-lamp-einrichten/
 The blog describes how to use the previous version (main branch) and needs to be revised for version 2.0 (branch 2.0.0-dev). In any case, the section "Possible errors - ERROR: for docker-lamp_bind Cannot start service bind" is helpful.

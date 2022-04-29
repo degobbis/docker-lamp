@@ -50,30 +50,37 @@ MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
-    *)
-        [ "$1" = "--help" ] && usage | more -d && exit 0
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
-        ;;&
-    start|restart|stop|shutdown|create-certs|update-images|delete-obsolete-images|save-db|restore-db|cli)
+    restart|stop|create-certs|update-images|delete-obsolete-images|restore-db)
         COMMAND="$1"
         ARGUMENT=""
         shift
-        ;;&
+        ;;
     start)
+        COMMAND="$1"
+        ARGUMENT=""
+        shift
         LONG="php: httpd: db: map-80-443: bind-off bind-on"
         SHORT="p: H: d: m:"
         ;;
     shutdown)
+        COMMAND="$1"
+        ARGUMENT=""
+        shift
         LONG="archive-folder: archive skip-save-db"
         SHORT="f: a s"
         ;;
     save-db)
+        COMMAND="$1"
+        shift
         ARGUMENT="$1"
         shift
         LONG="archive-folder: archive"
         SHORT="f: a"
        ;;
     cli)
+        COMMAND="$1"
+        ARGUMENT=""
+        shift
         CLI_CONTAINER="$1"
         shift
         _TMP=""
@@ -89,6 +96,10 @@ case "$1" in
         [ ! -z "$_TMP" ] && set -- $_TMP
         LONG="as-root xdebug"
         SHORT="r x"
+        ;;
+    *)
+        [ "$1" = "--help" ] && usage | more -d && exit 0
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         ;;
 esac
 
