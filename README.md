@@ -42,13 +42,13 @@ The blog describes how to use the previous version (main branch) and needs to be
 
 #### Start
 ```
-$ docker-lamp start
+$ ./docker-lamp start
 ```
 
 #### Stop
 Shutdown and automatically create an .sql image of the databases 
 ```
-$ docker-lamp shutdown
+$ ./docker-lamp shutdown
 ```
 
 ### Use browser to browse

@@ -28,7 +28,7 @@ Also needed is to add your domains in your .env file for SSL_DOMAINS and EXTRA_H
 
 Example for .env file:  
 ``EXTRA_HOSTS=example.org=127.0.0.1,www.example.org=127.0.0.1,other-example.org=127.0.0.1,www.example.org=127.0.0.1``  
-``SSL_DOMAINS= example.org,www.example.org other-example.org,www.other-example.org``
+``SSL_DOMAINS=example.org,www.example.org other-example.org,www.other-example.org``
 
 Example for Document Root folder is:  
 ``./data/www/example.org`` or example.org in the path of your APP_BASEDIR variable.  
