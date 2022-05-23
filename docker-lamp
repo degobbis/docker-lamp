@@ -4,10 +4,16 @@
 DEBUG=0
 
 # Define the basedir for the docker compose.
-DOCKER_LAMP_BASEDIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+if [[ "$(command readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
+    DOCKER_LAMP_BASEDIR="$( cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 ; pwd -P )"
+else
+    DOCKER_LAMP_BASEDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+fi
 
 # Load the functions for the script
 . $DOCKER_LAMP_BASEDIR/.config/functions.sh
+
+log "$DOCKER_LAMP_BASEDIR"
 
 # Test if docker ist installed an the deamon is startet
 if [[ "$(command docker >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
