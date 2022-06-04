@@ -4,7 +4,7 @@
 DEBUG=0
 
 # Define the basedir for the docker compose.
-if [[ "$(command readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
+if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
     DOCKER_LAMP_BASEDIR="$( cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 ; pwd -P )"
 else
     DOCKER_LAMP_BASEDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -13,7 +13,8 @@ fi
 # Load the functions for the script
 . $DOCKER_LAMP_BASEDIR/.config/functions.sh
 
-log "$DOCKER_LAMP_BASEDIR"
+headline "----------------------"
+log "DOCKER_LAMP_BASEDIR: $DOCKER_LAMP_BASEDIR"
 
 # Test if docker ist installed an the deamon is startet
 if [[ "$(command docker >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
@@ -27,11 +28,16 @@ if [[ "$(docker info >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
 fi
 
 # If called without command, return help and exit.
-[ "$#" -eq 0 ] && usage | more -d && exit 1
+[ "$#" -eq 0 ] && usage | more -d && exit 0
 
 # Define the basedir for the .env file
 ENV_FILE_BASEDIR="$(pwd)"
+
+[ ! -w "$ENV_FILE_BASEDIR" ] && error "No write permissions for '$ENV_FILE_BASEDIR'" && exit 1
+
 ENV_FILE="$ENV_FILE_BASEDIR/.env"
+
+log "ENV_FILE: $ENV_FILE"
 
 if [ -f "$ENV_FILE" ]; then
     ENV_FILE_LOADED="$(. $ENV_FILE 2>&1)"
@@ -48,6 +54,24 @@ else
     warn "or change to the directory, where the '.env' file is."
     exit 1
 fi
+
+# Fix for relative path on 'APP_BASEDIR'
+if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
+    NEW_APP_BASEDIR="$( cd -- "$APP_BASEDIR" >/dev/null 2>&1 ; pwd -P )/$(basename "$APP_BASEDIR")"
+else
+    NEW_APP_BASEDIR="$(readlink -f "$APP_BASEDIR")"
+fi
+
+log "APP_BASEDIR: $APP_BASEDIR"
+log "NEW_APP_BASEDIR: $NEW_APP_BASEDIR"
+
+if [ ! "$(basename "$NEW_APP_BASEDIR")" = "$(basename "$APP_BASEDIR")" ] || [ ! -d "$NEW_APP_BASEDIR" ]; then
+    warn "'APP_BASEDIR=$APP_BASEDIR' defined in '$ENV_FILE' would be resolved as '$NEW_APP_BASEDIR'"
+    error "'$NEW_APP_BASEDIR' does not exists!"
+    exit 1
+fi
+
+APP_BASEDIR=$NEW_APP_BASEDIR
 
 DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
 DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
