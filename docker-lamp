@@ -56,12 +56,17 @@ MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
+    --help)
+        usage | more -d && exit 0
+        ;;
     restart|stop|create-certs|update-images|delete-obsolete-images|restore-db)
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
         ;;
     start)
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -69,6 +74,7 @@ case "$1" in
         SHORT="p: H: d: m:"
         ;;
     shutdown)
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -76,6 +82,7 @@ case "$1" in
         SHORT="f: a s"
         ;;
     save-db)
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         COMMAND="$1"
         shift
         ARGUMENT="$1"
@@ -84,6 +91,7 @@ case "$1" in
         SHORT="f: a"
        ;;
     cli)
+        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -103,11 +111,15 @@ case "$1" in
         LONG="as-root xdebug"
         SHORT="r x"
         ;;
-    *)
-        [ "$1" = "--help" ] && usage | more -d && exit 0
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
-        ;;
 esac
+
+headline "----------------------"
+log "COMMAND: $COMMAND"
+log "ARGUMENT: $ARGUMENT"
+log "CLI_CONTAINER: $CLI_CONTAINER"
+log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
+log "SHORT: $SHORT"
+log "LONG: $LONG"
 
 [ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
 
@@ -146,15 +158,6 @@ if [ "$COMMAND" = "restore-db" ]; then
     restore_db
     exit 0
 fi
-
-headline "----------------------"
-log "COMMAND: $COMMAND"
-log "ARGUMENT: $ARGUMENT"
-log "CLI_CONTAINER: $CLI_CONTAINER"
-log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
-log "SHORT: $SHORT"
-log "LONG: $LONG"
-
 
 headline "before getopt"
 log "\$@:" "$@"
