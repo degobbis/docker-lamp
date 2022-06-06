@@ -2,7 +2,6 @@
     image: cytopia/bind:0.15
     container_name: ${COMPOSE_PROJECT_NAME}_bind
     hostname: bind
-    restart: always
     ports:
       - "53:53/tcp"
       - "53:53/udp"
