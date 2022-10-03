@@ -15,24 +15,24 @@ When starting up docker-lamp it will:
 ### MacOS
 - gnu-getopt
 
-Install with Brew
+Install with Brew:
 ```
 brew install gnu-getopt
 ```
 
-Add to Your PATH variable
+Add to Your PATH variable:
 ```
 sudo echo 'export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"' >> ~/.bash_profile
 ```
 
-And finally add ```FLAGS_GETOPT_CMD```
+And finally add ```FLAGS_GETOPT_CMD```:
 ```
 sudo echo 'export FLAGS_GETOPT_CMD="/usr/local/opt/gnu-getopt/bin/getopt"' >> ~/.bash_profile
 ```
 
-Open a new terminal, or run ```. ~/. bash_profile``` in existing terminal to load changes
+Open a new terminal, or run ```. ~/. bash_profile``` in existing terminal to load changes.
 
-Run ```echo $FLAGS_GETOPT_CMD``` to confirm it was actually set in your console
+Run ```echo $FLAGS_GETOPT_CMD``` to confirm it was actually set in your terminal.
 
 ## Documentation
 Installation: https://blog.astrid-guenther.de/en/ubuntu-docker-lamp-einrichten/
