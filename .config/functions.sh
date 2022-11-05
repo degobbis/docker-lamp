@@ -39,9 +39,9 @@ usage() {
     warn "cli <CONTAINER-NAME> [<parameters>][ '<COMMAND-TO-PASS>']"
     info "-> Uses 'docker exec -it <CONTAINER-NAME>' to launch into the cli in the container, or to execute the passed command."
     info "-> Use single quotes ' to pass the command to the container to be executed in it."
-    echo
-    warn "save-db <DB-NAME>"
-    info "-> Uses 'docker-compose down' to stop the server."
+#    echo
+#    warn "save-db <DB-NAME>"
+#    info "-> Uses 'docker compose down' to stop the server."
     exit 0
 }
 
@@ -261,7 +261,7 @@ add_yaml_to_load() {
         LOAD_YAML="$YAML_LIST_TO_LOAD $DOCKER_LAMP_BASEDIR/.config/$CONTAINER_PATH/config.yml"
     else
         echo
-        error "docker-compose configuration file for '$CONTAINER_PATH' not found!"
+        error "docker compose configuration file for '$CONTAINER_PATH' not found!"
         warn "Searched for '$APP_BASEDIR/$CONTAINER_PATH/config.yml'"
         warn "and '$DOCKER_LAMP_BASEDIR/.config/$CONTAINER_PATH/config.yml'"
         exit 1
@@ -420,7 +420,7 @@ update_images() {
 
     [ -f "$DOCKER_COMPOSE_YAML" ] && yaml_file_for_update="$DOCKER_COMPOSE_YAML"
 
-    docker-compose -f $yaml_file_for_update pull
+    docker compose -f $yaml_file_for_update pull
 }
 
 cli_container() {

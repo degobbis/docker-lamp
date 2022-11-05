@@ -74,7 +74,7 @@ fi
 APP_BASEDIR=$NEW_APP_BASEDIR
 
 DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
-DOCKER_COMPOSE_CALL="docker-compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
+DOCKER_COMPOSE_CALL="docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
 
 MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
 
