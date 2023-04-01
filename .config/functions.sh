@@ -427,6 +427,8 @@ cli_container() {
     local params="--user $APP_USER_ID "
     local container_name="$CLI_CONTAINER"
     local shell="sh"
+    local call_as_root="${AS_ROOT:-0}"
+
 
     # TODO: Set it only on CLI call for CLI debugging
     local env=' -e XDEBUG_CONFIG= '
@@ -446,7 +448,13 @@ cli_container() {
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $container_name)" ] \
         && warn "The container '$CLI_CONTAINER' is not running." && exit 0
 
-    [ "${AS_ROOT:-0}" -eq 1 ] && params="--privileged "
+    if [[ "$(docker context show)" = "desktop-linux" ]]; then
+        success "Docker Desktop for Linux in usage."
+        warn "Logged in as root!"
+        call_as_root="1"
+    fi
+
+    [ "$call_as_root" -eq 1 ] && params="--privileged "
     [ "${CLI_WITH_XDEBUG:-0}" -eq 0 ] && env=""
 
     headline "Before starting CLI for '$CLI_CONTAINER'"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Define debug mode.
-DEBUG=0
+DEBUG="0"
 
 # Define the basedir for the docker compose.
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
@@ -77,6 +77,7 @@ DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
 DOCKER_COMPOSE_CALL="docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
 
 MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
+
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
