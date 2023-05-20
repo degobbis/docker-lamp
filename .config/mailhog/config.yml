@@ -3,8 +3,8 @@
     container_name: ${COMPOSE_PROJECT_NAME}_mailhog
     hostname: mailhog
     ports:
-      - "8025:8025"
-      - "1025:1025"
-    networks:
-      net:
-        ipv4_address: 172.16.238.9
+      - "${SURFACE_PORT:-8025}:8025"
+      - "${SENDMAIL_PORT:-1025}:1025"
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.9

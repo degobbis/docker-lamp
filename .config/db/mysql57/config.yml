@@ -14,7 +14,7 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "3306:3306"
-    networks:
-      net:
-        ipv4_address: 172.16.238.8
+      - "${DATABASE_PORT:-3306}:3306"
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.8

@@ -16,6 +16,6 @@
       MEMORY_LIMIT: ${PMA_MEMORY_LIMIT:-512M}
       UPLOAD_LIMIT: ${PMA_UPLOAD_LIMIT:-512M}
       MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
-    networks:
-      net:
-        ipv4_address: 172.16.238.7
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.7

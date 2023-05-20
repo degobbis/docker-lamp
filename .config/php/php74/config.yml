@@ -3,7 +3,6 @@
     container_name: ${COMPOSE_PROJECT_NAME}_php74
     hostname: php74
     links:
-      - mailhog
       - ${DATABASE_TO_USE}
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
@@ -20,6 +19,6 @@
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php74/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
-    networks:
-      net:
-        ipv4_address: 172.16.238.13
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.13

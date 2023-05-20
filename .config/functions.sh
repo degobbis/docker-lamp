@@ -283,11 +283,14 @@ get_yaml_list() {
 start_server() {
     local _db_volume_exist=$(docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep "${COMPOSE_PROJECT_NAME}_db-data-dir")
 
-    create_certs
+    if [ "$USE_BIND" -eq 1 ]; then
+        create_certs
+    fi
 
     warn "Start server:"
     $DOCKER_COMPOSE_CALL up -d --force-recreate \
         && success "Server started."
+    info ""
 
     [ -z "$_db_volume_exist" ] && restore_db
 }
@@ -303,10 +306,15 @@ restart_server() {
         | grep -v 'db-data-dir' | awk 'NR > 1 {print $2}' \
         | xargs docker volume rm --force \
         | xargs echo "Volumes removed:"
-    create_certs
+
+    if [ "$USE_BIND" -eq 1 ]; then
+        create_certs
+    fi
+
     warn "Start server:"
     $DOCKER_COMPOSE_CALL up -d --force-recreate \
         && success "Server restarted."
+    info ""
 }
 
 shutdown_server() {
@@ -374,8 +382,6 @@ delete_obsolete_images() {
 }
 
 create_certs() {
-    local MINICA_BASEDIR="$APP_BASEDIR/ca"
-
     [ ! -z "$SSL_LOCALDOMAINS" ] \
         && MINICA_DEFAULT_DOMAINS="$MINICA_DEFAULT_DOMAINS,$SSL_LOCALDOMAINS"
 
@@ -385,8 +391,23 @@ create_certs() {
     MINICA_DEFAULT_DOMAINS="$(echo "$MINICA_DEFAULT_DOMAINS" | sed "s/, /,/g")"
 
     warn "Start creating SSL certificates:"
+
     for domain in $MINICA_DEFAULT_DOMAINS; do
-        info "Create certificate for:" "$domain"
+        local first_domain=$(echo $domain | cut -d ',' -f1)
+
+        info ""
+        log "domain: $domain"
+        log "first_domain: $first_domain"
+
+        if [ -d "$MINICA_BASEDIR/$first_domain" ]; then
+            success "Skipping the creation of the certificate bundle because it exists, in:" "$MINICA_BASEDIR/$first_domain"
+            info "-> Bundle for: $domain"
+            continue
+        fi
+
+        success "Create certificate bundle in:" "$MINICA_BASEDIR/$first_domain"
+        info "-> Bundle for: $domain"
+
         docker run --user $APP_USER_ID -it --rm \
             -v "$MINICA_BASEDIR:/certs" \
             degobbis/minica \
@@ -396,7 +417,9 @@ create_certs() {
         echo
     done
 
+    info ""
     success "All certificates created."
+    info ""
 }
 
 restore_db() {

@@ -9,12 +9,12 @@
       - WILDCARD_DNS=${TLD_SUFFIX}
       - EXTRA_HOSTS=${EXTRA_HOSTS}
       - DNS_FORWARDER=${BIND_DNS_RESOLVER}
-    dns:
-      - 127.0.0.1
+#    dns:
+#      - 127.0.0.1
     # MacOS and Windows have this by default, this hack also allows it for Linux
-    extra_hosts:
-      - "docker.for.lin.host.internal:172.16.238.1"
-      - "docker.for.lin.localhost:172.16.238.1"
-    networks:
-      net:
-        ipv4_address: 172.16.238.100
+#    extra_hosts:
+#      - "docker.for.lin.host.internal:172.16.238.1"
+#      - "docker.for.lin.localhost:172.16.238.1"
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.100

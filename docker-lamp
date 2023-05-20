@@ -76,6 +76,8 @@ APP_BASEDIR=$NEW_APP_BASEDIR
 DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
 DOCKER_COMPOSE_CALL="docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
 
+log "DOCKER_COMPOSE_CALL: $DOCKER_COMPOSE_CALL"
+
 MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
 
 
@@ -310,8 +312,12 @@ log "HTTPD_TO_USE: $HTTPD_TO_USE"
 log "PHP_TO_USE: $PHP_TO_USE"
 log "USE_BIND: $USE_BIND"
 
-MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
-MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
+if [ ! -z "$MAP_PORT_80_443" ]; then
+    MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
+    MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
+
+    HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443"
+fi
 
 HTTPD_PORT_PHP56="8056"
 HTTPD_SSL_PORT_PHP56="8456"
@@ -325,7 +331,7 @@ HTTPD_PORT_PHP81="8081"
 HTTPD_SSL_PORT_PHP81="8481"
 HTTPD_PORT_PHP82="8082"
 HTTPD_SSL_PORT_PHP82="8482"
-HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443 8000:8000 8400:8400"
+HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $PMA_PORT:8000 $PMA_SSL_PORT:8400"
 
 # Define the LOAD_YAML variable with the base YAML-Config
 add_yaml_to_load base
@@ -335,7 +341,9 @@ add_yaml_to_load phpmyadmin
 HTTPD_LINKS_LIST="phpmyadmin"
 
 # Add mailhog YAML-Config to LOAD_YAML
-add_yaml_to_load mailhog
+if [ "$USE_MAILHOG" -eq 1 ]; then
+    add_yaml_to_load mailhog
+fi
 
 # Add BIND support, if not disabled
 if [ "$USE_BIND" -eq 1 ]; then
@@ -349,8 +357,8 @@ add_yaml_to_load httpd/$HTTPD_TO_USE
 for var in $PHP_TO_USE; do
     PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
     PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
-    HTTPD_PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
-    HTTPD_PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
+    HTTPD_PHP_PORT=$(eval echo "\$HTTPD_PORT_$(echo "${var}" | awk '{print toupper($0)}')")
+    HTTPD_PHP_SSL_PORT=$(eval echo "\$HTTPD_SSL_PORT_$(echo "${var}" | awk '{print toupper($0)}')")
 
     # Add php versions YAML-Config to LOAD_YAML
     add_yaml_to_load php/$var

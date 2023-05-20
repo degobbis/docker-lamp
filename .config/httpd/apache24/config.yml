@@ -7,6 +7,7 @@
       - ${DOCKER_LAMP_BASEDIR}/.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
       - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
+      - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}:/srv/ca:rw
       - pma:/var/www/pma
       - phpsocket:/run/php
     ports: ${HTTPD_PORTS}
@@ -15,8 +16,8 @@
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-    dns:
-      - 172.16.238.100
-    networks:
-      net:
-        ipv4_address: 172.16.238.10
+#    dns:
+#      - 172.16.238.100
+#    networks:
+#      net:
+#        ipv4_address: 172.16.238.10
