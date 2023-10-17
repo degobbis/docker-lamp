@@ -35,7 +35,7 @@ Open a new terminal, or run ```. ~/. bash_profile``` in existing terminal to loa
 Run ```echo $FLAGS_GETOPT_CMD``` to confirm it was actually set in your terminal.
 
 ## Documentation
-Installation: https://blog.astrid-guenther.de/en/ubuntu-docker-lamp-einrichten/
+Installation: https://blog.astrid-guenther.de/ubuntu_docker-lamp/2ubuntu-git-einrichten/
 The blog describes how to use the previous version (main branch) and needs to be revised for version 2.0 (branch 2.0.0-dev). In any case, the section "Possible errors - ERROR: for docker-lamp_bind Cannot start service bind" is helpful.
 
 ### Main commands
