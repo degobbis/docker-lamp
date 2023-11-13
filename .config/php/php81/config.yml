@@ -1,5 +1,5 @@
   php81:
-    image: degobbis/php81-fpm-alpine:latest
+    image: degobbis/php81:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php81
     hostname: php81
     links:
@@ -19,6 +19,3 @@
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php81/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
-#    networks:
-#      net:
-#        ipv4_address: 172.16.238.15

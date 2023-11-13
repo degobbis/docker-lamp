@@ -1,20 +1,10 @@
   bind:
-    image: cytopia/bind:0.15
+    image: cytopia/bind:alpine-0.35
     container_name: ${COMPOSE_PROJECT_NAME}_bind
     hostname: bind
     ports:
       - "53:53/tcp"
       - "53:53/udp"
     environment:
-      - WILDCARD_DNS=${TLD_SUFFIX}
-      - EXTRA_HOSTS=${EXTRA_HOSTS}
-      - DNS_FORWARDER=${BIND_DNS_RESOLVER}
-#    dns:
-#      - 127.0.0.1
-    # MacOS and Windows have this by default, this hack also allows it for Linux
-#    extra_hosts:
-#      - "docker.for.lin.host.internal:172.16.238.1"
-#      - "docker.for.lin.localhost:172.16.238.1"
-#    networks:
-#      net:
-#        ipv4_address: 172.16.238.100
+      - DNS_A=${DNS_A}
+      - DNS_FORWARDER=${DNS_FORWARDER}

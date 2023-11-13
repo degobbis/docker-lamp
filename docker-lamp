@@ -340,9 +340,9 @@ add_yaml_to_load base
 add_yaml_to_load phpmyadmin
 HTTPD_LINKS_LIST="phpmyadmin"
 
-# Add mailhog YAML-Config to LOAD_YAML
-if [ "$USE_MAILHOG" -eq 1 ]; then
-    add_yaml_to_load mailhog
+# Add mailcatcher YAML-Config to LOAD_YAML
+if [ "$USE_MAILCATCHER" -eq 1 ]; then
+    add_yaml_to_load mailcatcher
 fi
 
 # Add BIND support, if not disabled

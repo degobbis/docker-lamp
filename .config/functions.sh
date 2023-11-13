@@ -15,7 +15,7 @@ usage() {
     warn "Commands:"
     warn "start [<parameters>]"
     info "-> If 'start' is used without parameters, the server is started with the globally defined settings from the '.env' file."
-    info "-> If parameters are set, these will override the global settings. The phpmyadmin and mailhog containers always start."
+    info "-> If parameters are set, these will override the global settings. The phpmyadmin and mailcatcher containers always start."
     echo
     warn "restart"
     info "-> Restarts the server with the same configuration as started before."
@@ -50,7 +50,7 @@ usage_start() {
     success "-> $(basename $0) start [<parameters>]"
     echo
     info "-> If 'start' is used without parameters, the server is started with the globally defined settings from the '.env' file."
-    info "-> If parameters are set, these will override the global settings. The phpmyadmin and mailhog containers always start."
+    info "-> If parameters are set, these will override the global settings. The phpmyadmin and mailcatcher containers always start."
     echo
     echo
     warn "Parameters:"
@@ -81,7 +81,7 @@ usage_start() {
     info_b "Example:"
     success "-> $(basename $0) start --php='php74 php80' --httpd='apache24'"
     success "-> $(basename $0) start -p 'php74 php80' -H 'apache24'"
-    info "-> Starts the server with php74 and php80, apache24, phpmyadmin, mailhog and the settings defined global in '.env' for db and bind."
+    info "-> Starts the server with php74 and php80, apache24, phpmyadmin, mailcatcher and the settings defined global in '.env' for db and bind."
     exit 0
 }
 
@@ -283,9 +283,9 @@ get_yaml_list() {
 start_server() {
     local _db_volume_exist=$(docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep "${COMPOSE_PROJECT_NAME}_db-data-dir")
 
-    if [ "$USE_BIND" -eq 1 ]; then
+    #if [ "$USE_BIND" -eq 1 ]; then
         create_certs
-    fi
+    #fi
 
     warn "Start server:"
     $DOCKER_COMPOSE_CALL up -d --force-recreate \

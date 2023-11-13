@@ -1,5 +1,5 @@
   apache24:
-    image: degobbis/apache24-alpine:latest
+    image: degobbis/apache24:latest
     container_name: ${COMPOSE_PROJECT_NAME}_apache24
     hostname: apache24
     links: ${HTTPD_LINKS}
@@ -16,8 +16,3 @@
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
-#    dns:
-#      - 172.16.238.100
-#    networks:
-#      net:
-#        ipv4_address: 172.16.238.10

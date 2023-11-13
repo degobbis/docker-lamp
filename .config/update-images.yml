@@ -2,37 +2,37 @@ version: '3'
 services:
 
   bind:
-    image: cytopia/bind:0.15
+    image: cytopia/bind:alpine-0.35
 
   apache24:
-    image: degobbis/apache24-alpine:latest
+    image: degobbis/apache24:latest
 
   php56:
-    image: degobbis/php56-fpm-alpine:latest
+    image: degobbis/php56:latest
 
   php73:
-    image: degobbis/php73-fpm-alpine:latest
+    image: degobbis/php73:latest
 
   php74:
-    image: degobbis/php74-fpm-alpine:latest
+    image: degobbis/php74:latest
 
   php80:
-    image: degobbis/php80-fpm-alpine:latest
+    image: degobbis/php80:latest
 
   php81:
-    image: degobbis/php81-fpm-alpine:latest
+    image: degobbis/php81:latest
 
   mariadb104:
-    image: degobbis/mariadb104-alpine:latest
+    image: degobbis/mariadb104:latest
 
   mariadb105:
-    image: degobbis/mariadb105-alpine:latest
+    image: degobbis/mariadb105:latest
 
   mariadb106:
-    image: degobbis/mariadb106-alpine:latest
+    image: degobbis/mariadb106:latest
 
-  mailhog:
-    image: mailhog/mailhog:latest
+  mailcatcher:
+    image: sj26/mailcatcher:latest
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:fpm-alpine
+    image: phpmyadmin:fpm-alpine

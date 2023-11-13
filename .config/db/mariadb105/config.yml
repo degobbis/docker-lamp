@@ -1,5 +1,5 @@
   mariadb105:
-    image: degobbis/mariadb105-alpine:latest
+    image: degobbis/mariadb105:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db
     hostname: mysql
     volumes:
@@ -14,6 +14,3 @@
       INIT_DB_BY_SCRIPT: 1
     ports:
       - "${DATABASE_PORT:-3306}:3306"
-#    networks:
-#      net:
-#        ipv4_address: 172.16.238.8

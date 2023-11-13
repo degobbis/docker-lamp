@@ -1,0 +1,7 @@
+  mailcatcher:
+    image: sj26/mailcatcher:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_mailcatcher
+    hostname: mailcatcher
+    ports:
+      - "${SURFACE_PORT:-8025}:1080"
+      - "${SENDMAIL_PORT:-1025}:1025"

@@ -4,16 +4,4 @@ volumes:
   db-data-dir:
   phpsocket:
 
-#networks:
-#  net:
-#    driver: bridge
-#    driver_opts:
-#      com.docker.network.bridge.name: "net"
-#      com.docker.network.enable_ipv6: "false"
-#    ipam:
-#      driver: default
-#      config:
-#        - subnet: 172.16.238.0/24
-#          gateway: 172.16.238.1
-
 services:
