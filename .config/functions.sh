@@ -457,6 +457,9 @@ cli_container() {
     local env=' -e XDEBUG_CONFIG= '
 
     [ "$CLI_CONTAINER" = "php80" ] && env+=' -e XDEBUG_SESSION=1 '
+    [ "$CLI_CONTAINER" = "php81" ] && env+=' -e XDEBUG_SESSION=1 '
+    [ "$CLI_CONTAINER" = "php82" ] && env+=' -e XDEBUG_SESSION=1 '
+    [ "$CLI_CONTAINER" = "php83" ] && env+=' -e XDEBUG_SESSION=1 '
 
     if [ "$CLI_CONTAINER" = "db" ]; then
         container_name="$DATABASE_TO_USE"

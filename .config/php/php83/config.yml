@@ -1,0 +1,21 @@
+  php83:
+    image: degobbis/php83:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php83
+    hostname: php83
+    links:
+      - ${DATABASE_TO_USE}
+    volumes:
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php83/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-development}
+      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php83/"
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
