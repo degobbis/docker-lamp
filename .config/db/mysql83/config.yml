@@ -1,0 +1,17 @@
+  mysql83:
+    image: degobbis/mysql83:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_db
+    hostname: mysql
+    volumes:
+      - ${DOCKER_LAMP_BASEDIR}/.config/db/mysql83/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
+      - db-data-dir:/var/lib/mysql
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/initDB:/docker-entrypoint-initdb.d
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LANG: ${MY_LOCALES:-en_GB.UTF-8}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      INIT_DB_BY_SCRIPT: 1
+    ports:
+      - "${DATABASE_PORT:-3306}:3306"

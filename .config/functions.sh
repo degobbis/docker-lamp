@@ -428,7 +428,7 @@ restore_db() {
 
     local shell="sh"
     case "$DATABASE_TO_USE" in
-        mysql57|mysql80)
+        mysql57|mysql80|mysql83)
             shell="bash"
             ;;
     esac
