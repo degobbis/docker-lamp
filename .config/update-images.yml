@@ -22,6 +22,12 @@ services:
   php81:
     image: degobbis/php81:latest
 
+  php82:
+    image: degobbis/php82:latest
+
+  php83:
+    image: degobbis/php83:latest
+
   mariadb104:
     image: degobbis/mariadb104:latest
 
@@ -31,8 +37,20 @@ services:
   mariadb106:
     image: degobbis/mariadb106:latest
 
+  mariadb1011:
+    image: degobbis/mariadb1011:latest
+
+  mysql57:
+    image: degobbis/mysql57:latest
+
+  mysql80:
+    image: degobbis/mysql80:latest
+
+  mysql83:
+    image: degobbis/mysql83:latest
+
   mailcatcher:
-    image: sj26/mailcatcher:latest
+    image: dockage/mailcatcher:latest
 
   phpmyadmin:
     image: phpmyadmin:fpm-alpine
