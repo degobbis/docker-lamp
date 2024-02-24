@@ -1,5 +1,5 @@
   mailcatcher:
-    image: sj26/mailcatcher:latest
+    image: dockage/mailcatcher:latest
     container_name: ${COMPOSE_PROJECT_NAME}_mailcatcher
     hostname: mailcatcher
     restart: 'unless-stopped'
