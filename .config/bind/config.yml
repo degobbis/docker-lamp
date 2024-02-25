@@ -1,3 +1,4 @@
+
   bind:
     image: cytopia/bind:alpine-0.35
     container_name: ${COMPOSE_PROJECT_NAME}_bind
@@ -8,3 +9,6 @@
     environment:
       - DNS_A=${DNS_A}
       - DNS_FORWARDER=${DNS_FORWARDER}
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

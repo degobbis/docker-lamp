@@ -1,3 +1,4 @@
+
   php82:
     image: degobbis/php82:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php82
@@ -19,3 +20,6 @@
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php82/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

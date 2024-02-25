@@ -1,3 +1,4 @@
+
   php56:
     image: degobbis/php56:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php56
@@ -19,3 +20,6 @@
       PHP_ENV: ${PHP_ENV:-production}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php56/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

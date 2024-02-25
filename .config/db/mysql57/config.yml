@@ -1,3 +1,4 @@
+
   mysql57:
     image: degobbis/mysql57:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db
@@ -14,3 +15,6 @@
       INIT_DB_BY_SCRIPT: 1
     ports:
       - "${DATABASE_PORT:-3306}:3306"
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
