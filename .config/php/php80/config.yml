@@ -4,6 +4,7 @@
     hostname: php80
     links:
       - ${DATABASE_TO_USE}
+      - mailcatcher
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php80/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
