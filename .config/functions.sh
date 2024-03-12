@@ -361,7 +361,7 @@ save_db() {
     esac
 
     warn "Save databases:"
-    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/backup-databases"
+    docker exec -it ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/backup-databases"
 }
 
 delete_obsolete_images() {
@@ -408,7 +408,8 @@ create_certs() {
         success "Create certificate bundle in:" "$MINICA_BASEDIR/$first_domain"
         info "-> Bundle for: $domain"
 
-        docker run --user $APP_USER_ID -it --rm \
+        # docker run --user $APP_USER_ID:$APP_GROUP_ID -it --rm \
+        docker run -it --rm \
             -v "$MINICA_BASEDIR:/certs" \
             degobbis/minica \
             --ca-cert minica-root-ca.pem \
@@ -434,7 +435,7 @@ restore_db() {
     esac
 
     warn "Restore databases:"
-    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
+    docker exec -it ${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
 
 }
 
@@ -447,7 +448,8 @@ update_images() {
 }
 
 cli_container() {
-    local params="--user $APP_USER_ID "
+    # local params="--user $APP_USER_ID:$APP_GROUP_ID "
+    local params=""
     local container_name="$CLI_CONTAINER"
     local shell="sh"
     local call_as_root="${AS_ROOT:-0}"
