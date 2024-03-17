@@ -408,7 +408,7 @@ create_certs() {
         success "Create certificate bundle in:" "$MINICA_BASEDIR/$first_domain"
         info "-> Bundle for: $domain"
 
-        docker run --user $APP_USER_ID -it --rm \
+        docker run --user $APP_USER_ID:$APP_GROUP_ID -it --rm \
             -v "$MINICA_BASEDIR:/certs" \
             degobbis/minica \
             --ca-cert minica-root-ca.pem \
@@ -447,7 +447,7 @@ update_images() {
 }
 
 cli_container() {
-    local params="--user $APP_USER_ID "
+    local params="--user $APP_USER_ID:$APP_GROUP_ID "
     local container_name="$CLI_CONTAINER"
     local shell="sh"
     local call_as_root="${AS_ROOT:-0}"
