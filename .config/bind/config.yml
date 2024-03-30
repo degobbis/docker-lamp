@@ -4,8 +4,8 @@
     container_name: ${COMPOSE_PROJECT_NAME}_bind
     hostname: bind
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
+      - "$REMOTE_HOST_IP:53:53/tcp"
+      - "$REMOTE_HOST_IP:53:53/udp"
     environment:
       - DNS_A=${DNS_A}
       - DNS_FORWARDER=${DNS_FORWARDER}
