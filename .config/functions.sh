@@ -467,8 +467,9 @@ cli_container() {
         container_name="$DATABASE_TO_USE"
 
         case "$DATABASE_TO_USE" in
-            mysql57|mysql80)
+            mysql57|mysql80|mysql83)
                 shell="bash"
+                params="--user 999:999 "
                 ;;
         esac
     fi
