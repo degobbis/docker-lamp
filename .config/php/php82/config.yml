@@ -2,6 +2,7 @@
     image: degobbis/php82:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php82
     hostname: php82
+    restart: unless-stopped
     links:
       - ${DATABASE_TO_USE}
       - mailcatcher
@@ -11,6 +12,7 @@
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
       - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
+      - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}/minica-root-ca.pem:/usr/local/share/ca-certificates/minica-root-ca.crt:rw
       - phpsocket:/run/php
     environment:
       TZ: ${MY_TZ:-UTC}
@@ -20,3 +22,10 @@
       PHP_ENV: ${PHP_ENV:-development}
       PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php82/"
       XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    depends_on:
+      - bind-internal
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_PHP82_IPv4}
+    dns:
+      - ${DL_BIND_INTERNAL_IPv4:-}

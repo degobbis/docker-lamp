@@ -2,12 +2,14 @@
     image: degobbis/apache24:latest
     container_name: ${COMPOSE_PROJECT_NAME}_apache24
     hostname: apache24
+    restart: unless-stopped
     links: ${HTTPD_LINKS}
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/httpd/apache24/conf.d:/usr/local/apache2/conf.d:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/httpd/apache24/vhosts:/usr/local/apache2/vhosts:rw
       - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
       - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}:/srv/ca:rw
+      - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}/minica-root-ca.pem:/usr/local/share/ca-certificates/minica-root-ca.crt:rw
       - pma:/var/www/pma
       - phpsocket:/run/php
     ports: ${HTTPD_PORTS}
@@ -16,3 +18,12 @@
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
       APP_USER_ID: ${APP_USER_ID:-1000}
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      MAP_PORT_80: ${MAP_PORT_80}
+      MAP_PORT_443: ${MAP_PORT_443}
+    depends_on:
+      - bind-internal
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_HTTPD_IPv4}
+    dns:
+      - ${DL_BIND_INTERNAL_IPv4:-}

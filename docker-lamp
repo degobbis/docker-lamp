@@ -39,6 +39,10 @@ ENV_FILE="$ENV_FILE_BASEDIR/.env"
 
 log "ENV_FILE: $ENV_FILE"
 
+# Define default subnet and remote host ip before load ENV_FILE
+DL_SUBNET="172.50.0.0/24"
+REMOTE_HOST_IP="0.0.0.0"
+
 if [ -f "$ENV_FILE" ]; then
     ENV_FILE_LOADED="$(. $ENV_FILE 2>&1)"
 
@@ -54,6 +58,12 @@ else
     warn "or change to the directory, where the '.env' file is."
     exit 1
 fi
+
+if [ ! -z "$USE_SUBNET" ]; then
+    DL_SUBNET="$USE_SUBNET"
+fi
+
+create_gateway_and_container_ipv4
 
 # Fix for relative path on 'APP_BASEDIR'
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
@@ -155,11 +165,6 @@ if [ "$COMMAND" = "start" ] \
     && ([ -f "$DOCKER_COMPOSE_YAML" ] && [ ! -z "$($DOCKER_COMPOSE_CALL ps -q)" ]); then
         error "Server is already running."
         exit 1
-fi
-
-if [ "$COMMAND" = "restart" ]; then
-    restart_server
-    exit 0
 fi
 
 if [ "$COMMAND" = "stop" ]; then
@@ -317,7 +322,7 @@ if [ ! -z "$MAP_PORT_80_443" ]; then
     MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
     MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
 
-    HTTPD_PORTS_LIST="80:$MAP_PORT_80 443:$MAP_PORT_443"
+    HTTPD_PORTS_LIST="80:80 443:443"
 fi
 
 HTTPD_PORT_PHP56="8056"
@@ -349,13 +354,12 @@ if [ "$USE_MAILCATCHER" -eq 1 ]; then
 fi
 
 # Add BIND support, if not disabled
-if [ "$USE_BIND" -eq 1 ]; then
-    add_yaml_to_load bind
-    HTTPD_LINKS_LIST="bind $HTTPD_LINKS_LIST"
-fi
+INIT_DL_BIND=""
+add_yaml_to_load bind
 
-# Add HTTPD YAML-Config to LOAD_YAML
-add_yaml_to_load httpd/$HTTPD_TO_USE
+if [ "$USE_BIND" -eq 1 ]; then
+    INIT_DL_BIND="--scale bind=1"
+fi
 
 for var in $PHP_TO_USE; do
     PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
@@ -394,6 +398,9 @@ log "BACKUP_FOLDER: $BACKUP_FOLDER"
 log "APP_BASEDIR: $APP_BASEDIR"
 log "LOAD_YAML: $LOAD_YAML"
 
+# Add HTTPD YAML-Config to LOAD_YAML
+add_yaml_to_load httpd/$HTTPD_TO_USE
+
 [ -f "$DOCKER_COMPOSE_YAML" ] && rm -f $DOCKER_COMPOSE_YAML
 ( echo "cat <<EOF > $ENV_FILE_BASEDIR/compose.yml";
   cat $LOAD_YAML;
@@ -404,6 +411,11 @@ rm -f $ENV_FILE_BASEDIR/temp.yml
 
 
 #exit 1
+
+if [ "$COMMAND" = "restart" ]; then
+    restart_server
+    exit 0
+fi
 
 if [ "$COMMAND" = "start" ]; then
     start_server

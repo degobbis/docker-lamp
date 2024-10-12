@@ -3,4 +3,22 @@ volumes:
   db-data-dir:
   phpsocket:
 
+networks:
+  dlbridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${DL_SUBNET}
+
 services:
+  bind-internal:
+    image: cytopia/bind:alpine-0.35
+    container_name: ${COMPOSE_PROJECT_NAME}_bind_internal
+    hostname: bind-internal
+    restart: unless-stopped
+    environment:
+      - DNS_A=${DNS_B}
+      - DNS_FORWARDER=${DNS_FORWARDER}
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_BIND_INTERNAL_IPv4}

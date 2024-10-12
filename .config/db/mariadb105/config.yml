@@ -2,6 +2,7 @@
     image: degobbis/mariadb105:latest
     container_name: ${COMPOSE_PROJECT_NAME}_db
     hostname: mysql
+    restart: unless-stopped
     volumes:
       - db-data-dir:/var/lib/mysql
       - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/initDB:/docker-entrypoint-initdb.d
@@ -14,3 +15,10 @@
       INIT_DB_BY_SCRIPT: 1
     ports:
       - "${DATABASE_PORT:-3306}:3306"
+    depends_on:
+      - bind-internal
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_DB_IPv4}
+    dns:
+      - ${DL_BIND_INTERNAL_IPv4:-}

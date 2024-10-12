@@ -280,6 +280,29 @@ get_yaml_list() {
     printf "$list"
 }
 
+create_gateway_and_container_ipv4() {
+    local _ip4="${DL_SUBNET%/*}"
+    local _old_remote_ip="$REMOTE_HOST_IP"
+   
+    REMOTE_HOST_IP="${_ip4%.*}.$((${_ip4##*.} + 1))"
+    DL_BIND_IPv4="${_ip4%.*}.$((${_ip4##*.} + 2))"
+    DL_BIND_INTERNAL_IPv4="${_ip4%.*}.$((${_ip4##*.} + 3))"
+    DL_HTTPD_IPv4="${_ip4%.*}.$((${_ip4##*.} + 4))"
+    DL_PHP56_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
+    DL_PHP74_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
+    DL_PHP80_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
+    DL_PHP81_IPv4="${_ip4%.*}.$((${_ip4##*.} + 8))"
+    DL_PHP82_IPv4="${_ip4%.*}.$((${_ip4##*.} + 9))"
+    DL_PHP83_IPv4="${_ip4%.*}.$((${_ip4##*.} + 10))"
+    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 11))"
+    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 12))"
+    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 13))"
+    
+    #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
+    DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
+    DNS_B=${DNS_A//127.0.0.1/$DL_HTTPD_IPv4}
+}
+
 start_server() {
     local _db_volume_exist=$(docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep "${COMPOSE_PROJECT_NAME}_db-data-dir")
 
@@ -288,7 +311,7 @@ start_server() {
     #fi
 
     warn "Start server:"
-    $DOCKER_COMPOSE_CALL up -d --force-recreate \
+    $DOCKER_COMPOSE_CALL up -d $INIT_DL_BIND --force-recreate \
         && success "Server started."
     info ""
 
@@ -307,14 +330,15 @@ restart_server() {
         | xargs docker volume rm --force \
         | xargs echo "Volumes removed:"
 
-    if [ "$USE_BIND" -eq 1 ]; then
-        create_certs
-    fi
+    #if [ "$USE_BIND" -eq 1 ]; then
+    #    create_certs
+    #fi
 
-    warn "Start server:"
-    $DOCKER_COMPOSE_CALL up -d --force-recreate \
-        && success "Server restarted."
-    info ""
+    start_server
+    #warn "Start server:"
+    #$DOCKER_COMPOSE_CALL up -d --force-recreate \
+    #    && success "Server restarted."
+    #info ""
 }
 
 shutdown_server() {

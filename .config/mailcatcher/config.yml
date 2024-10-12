@@ -2,7 +2,14 @@
     image: mailhog/mailhog:latest
     container_name: ${COMPOSE_PROJECT_NAME}_mailcatcher
     hostname: mailcatcher
-    restart: 'unless-stopped'
+    restart: unless-stopped
     ports:
       - "${SURFACE_PORT:-8025}:8025"
       - "${SENDMAIL_PORT:-1025}:1025"
+    depends_on:
+      - bind-internal
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_MAILCATCHER_IPv4}
+    dns:
+      - ${DL_BIND_INTERNAL_IPv4:-}

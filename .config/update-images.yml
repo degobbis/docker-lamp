@@ -10,9 +10,6 @@ services:
   php56:
     image: degobbis/php56:latest
 
-  php73:
-    image: degobbis/php73:latest
-
   php74:
     image: degobbis/php74:latest
 
@@ -56,7 +53,7 @@ services:
     image: degobbis/mysql84:latest
 
   mailcatcher:
-    image: dockage/mailcatcher:latest
+    image: mailhog/mailhog:latest
 
   phpmyadmin:
     image: phpmyadmin:fpm-alpine
