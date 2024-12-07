@@ -288,16 +288,17 @@ create_gateway_and_container_ipv4() {
     DL_BIND_IPv4="${_ip4%.*}.$((${_ip4##*.} + 2))"
     DL_BIND_INTERNAL_IPv4="${_ip4%.*}.$((${_ip4##*.} + 3))"
     DL_HTTPD_IPv4="${_ip4%.*}.$((${_ip4##*.} + 4))"
-    DL_PHP56_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
-    DL_PHP74_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
-    DL_PHP80_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
-    DL_PHP81_IPv4="${_ip4%.*}.$((${_ip4##*.} + 8))"
-    DL_PHP82_IPv4="${_ip4%.*}.$((${_ip4##*.} + 9))"
-    DL_PHP83_IPv4="${_ip4%.*}.$((${_ip4##*.} + 10))"
-    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 11))"
-    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 12))"
-    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 13))"
-    
+    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
+    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
+    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
+    DL_PHP56_IPv4="${_ip4%.*}.$((${_ip4##*.} + 8))"
+    DL_PHP74_IPv4="${_ip4%.*}.$((${_ip4##*.} + 9))"
+    DL_PHP80_IPv4="${_ip4%.*}.$((${_ip4##*.} + 10))"
+    DL_PHP81_IPv4="${_ip4%.*}.$((${_ip4##*.} + 11))"
+    DL_PHP82_IPv4="${_ip4%.*}.$((${_ip4##*.} + 12))"
+    DL_PHP83_IPv4="${_ip4%.*}.$((${_ip4##*.} + 13))"
+    DL_PHP84_IPv4="${_ip4%.*}.$((${_ip4##*.} + 14))"
+
     #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
     DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
     DNS_B=${DNS_A//127.0.0.1/$DL_HTTPD_IPv4}
@@ -484,6 +485,7 @@ cli_container() {
     [ "$CLI_CONTAINER" = "php81" ] && env+=' -e XDEBUG_SESSION=1 '
     [ "$CLI_CONTAINER" = "php82" ] && env+=' -e XDEBUG_SESSION=1 '
     [ "$CLI_CONTAINER" = "php83" ] && env+=' -e XDEBUG_SESSION=1 '
+    [ "$CLI_CONTAINER" = "php84" ] && env+=' -e XDEBUG_SESSION=1 '
 
     if [ "$CLI_CONTAINER" = "db" ]; then
         container_name="$DATABASE_TO_USE"
