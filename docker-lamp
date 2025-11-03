@@ -108,8 +108,8 @@ case "$1" in
         COMMAND="$1"
         ARGUMENT=""
         shift
-        LONG="php: httpd: db: map-80-443: bind-off bind-on"
-        SHORT="p: H: d: m:"
+        LONG="php: httpd: db: db-port: map-80-443: project-name: bind-off bind-on"
+        SHORT="p: H: d: D: m: P:"
         ;;
     shutdown)
         [ "$2" = "--help" ] && usage $1 | more -d && exit 0
@@ -263,8 +263,17 @@ while true; do
                 log "set ARCHIVE_FOLDER to '$2'"
                 shift 2
                 ;;
+
+            -D | --db-port)
+                DATABASE_PORT="$2"
+                shift 2
+                ;;
             -d | --db)
                 DATABASE_TO_USE="$2"
+                shift 2
+                ;;
+            -P | --project-name)
+                COMPOSE_PROJECT_NAME="$2"
                 shift 2
                 ;;
             -r | --as-root)
