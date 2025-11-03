@@ -75,7 +75,7 @@ fi
 log "APP_BASEDIR: $APP_BASEDIR"
 log "NEW_APP_BASEDIR: $NEW_APP_BASEDIR"
 
-if [ ! "$(basename "$NEW_APP_BASEDIR")" = "$(basename "$APP_BASEDIR")" ] || [ ! -d "$NEW_APP_BASEDIR" ]; then
+if [ ! -d "$NEW_APP_BASEDIR" ]; then
     warn "'APP_BASEDIR=$APP_BASEDIR' defined in '$ENV_FILE' would be resolved as '$NEW_APP_BASEDIR'"
     error "'$NEW_APP_BASEDIR' does not exists!"
     exit 1
