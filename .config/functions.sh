@@ -270,47 +270,67 @@ add_yaml_to_load() {
     log_s "$CONTAINER_PATH YAML loaded."
 }
 
+get_yaml_aliases() {
+    local aliases=""
+
+    for alias in $1; do
+        aliases="${aliases}\n          - \"${alias}\""
+    done
+
+    printf "${aliases}"
+}
+
 get_yaml_list() {
     local list=""
 
     for item in $1; do
-        list="$list\n      - \"$item\""
+        list="${list}\n      - \"${item}\""
     done
 
-    printf "$list"
+    printf "${list}"
+}
+
+get_yaml_volumes() {
+    local volumes=""
+
+    for volume in $1; do
+        volumes="${volumes}\n  ${volume}:"
+    done
+
+    printf "${volume}"
 }
 
 create_gateway_and_container_ipv4() {
     local _ip4="${DL_SUBNET%/*}"
     local _old_remote_ip="$REMOTE_HOST_IP"
-   
+
     REMOTE_HOST_IP="${_ip4%.*}.$((${_ip4##*.} + 1))"
     DL_BIND_IPv4="${_ip4%.*}.$((${_ip4##*.} + 2))"
     DL_BIND_INTERNAL_IPv4="${_ip4%.*}.$((${_ip4##*.} + 3))"
     DL_HTTPD_IPv4="${_ip4%.*}.$((${_ip4##*.} + 4))"
-    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
-    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
-    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
+#    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
+#    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
+#    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
 
-    seq=8
-    for var in $PHP_TO_USE; do
-      # Construct name of environment variable
-      IPv4_NAME="DL_${var@U}_IPv4"
-      # Declare global variable with dynamic name and assign address
-      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-      seq=$((seq + 1))
-    done
+#    seq=8
+#    for var in $PHP_TO_USE; do
+#      # Construct name of environment variable
+#      IPv4_NAME="DL_${var@U}_IPv4"
+#      # Declare global variable with dynamic name and assign address
+#      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+#      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+#      seq=$((seq + 1))
+#    done
 
-    seq=15
-    for var in $DATABASE_TO_USE; do
-      # Construct name of environment variable address
-      IPv4_NAME="DL_${var@U}_IPv4"
-      # Declare global variable with dynamic name and assign
-      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-      seq=$((seq + 1))
-    done
+#    seq=15
+#    for var in $DATABASE_TO_USE; do
+#      # Construct name of environment variable address
+#      IPv4_NAME="DL_${var@U}_IPv4"
+#      # Declare global variable with dynamic name and assign
+#      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+#      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+#      seq=$((seq + 1))
+#    done
 
     #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
     DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
@@ -318,7 +338,28 @@ create_gateway_and_container_ipv4() {
 }
 
 check_override_folders() {
-    local needed=("ca" "httpd/apache24" "initDB" "php/php56" "php/php74" "php/php80" "php/php81" "php/php82" "php/php83" "php/php84" )
+    local needed=(
+        "ca"
+        "httpd/apache24"
+        "initDB/mariadb104"
+        "initDB/mariadb105"
+        "initDB/mariadb106"
+        "initDB/mariadb1011"
+        "initDB/mariadb114"
+        "initDB/mysql57"
+        "initDB/mysql80"
+        "initDB/mysql83"
+        "initDB/mysql84"
+        "initDB/mysql93"
+        "initDB/mysql94"
+        "php/php56"
+        "php/php74"
+        "php/php80"
+        "php/php81"
+        "php/php82"
+        "php/php83"
+        "php/php84"
+    )
 
     for folder in "${needed[@]}"; do
         if ! test -d "${APP_BASEDIR}/${folder}"; then
@@ -328,9 +369,29 @@ check_override_folders() {
     done
 }
 
-start_server() {
-    local _db_volume_exist=$(docker volume ls --filter=name=$COMPOSE_PROJECT_NAME | grep "${COMPOSE_PROJECT_NAME}_db-data-dir")
+iterate_databases() {
+    local _command="$1"
 
+    for var in ${DATABASE_TO_USE}; do
+        if [ "${_command}" == "restore" ]; then
+            local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
+            [ -z "${_db_volume_exist}" ] && restore_db ${var}
+        fi
+
+        if [ "${_command}" == "save" ]; then
+            save_db ${var}
+        fi
+    done
+}
+
+check_db_volumes_on_start() {
+    for var in ${DATABASE_TO_USE}; do
+        local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
+        [ -z "${_db_volume_exist}" ] && restore_db ${var}
+    done
+}
+
+start_server() {
     check_override_folders
 
     #if [ "$USE_BIND" -eq 1 ]; then
@@ -338,24 +399,18 @@ start_server() {
     #fi
 
     warn "Start server:"
-    $DOCKER_COMPOSE_CALL up -d $INIT_DL_BIND --force-recreate \
+    ${DOCKER_COMPOSE_CALL} up -d ${INIT_DL_BIND} --force-recreate \
         && success "Server started."
     info ""
 
-    [ -z "$_db_volume_exist" ] && restore_db
+    iterate_databases "restore"
 }
 
 restart_server() {
-    ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) \
+    ( [ -f "${DOCKER_COMPOSE_YAML}" ] && [ -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ] ) \
         && warn "Server is not running." && exit 0
 
-    warn "Stop server:"
-    $DOCKER_COMPOSE_CALL down
-    warn "Removing volumes:"
-    docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
-        | grep -v 'db-data-dir' | awk 'NR > 1 {print $2}' \
-        | xargs docker volume rm --force \
-        | xargs echo "Volumes removed:"
+    stop_server
 
     #if [ "$USE_BIND" -eq 1 ]; then
     #    create_certs
@@ -369,93 +424,91 @@ restart_server() {
 }
 
 shutdown_server() {
-    ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) \
+    ( [ -f "${DOCKER_COMPOSE_YAML}" ] && [ -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ] ) \
         && warn "Server is not running." \
         && exit 0
 
-    [ -z "$SKIP_SAVE_DATABASES" ] \
-        && save_db \
+    [ -z "${SKIP_SAVE_DATABASES}" ] \
+        && iterate_databases "save" \
         || success "Skip save database(s)."
 
     warn "Shutdown server:"
-    $DOCKER_COMPOSE_CALL down -v
+    ${DOCKER_COMPOSE_CALL} down -v
     success "Server shut down."
 }
 
 stop_server() {
-    ( [ -f "$DOCKER_COMPOSE_YAML" ] && [ -z "$($DOCKER_COMPOSE_CALL ps -q)" ] ) \
+    ( [ -f "${DOCKER_COMPOSE_YAML}" ] && [ -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ] ) \
         && warn "Server is not running." && exit 0
 
     warn "Stop server:"
-    $DOCKER_COMPOSE_CALL down
+    ${DOCKER_COMPOSE_CALL} down
     warn "Removing volumes:"
-    docker volume ls --filter=name=$COMPOSE_PROJECT_NAME \
-        | grep -v 'db-data-dir' | awk 'NR > 1 {print $2}' \
+    docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} \
+        | awk 'NR > 1 {print $2}' \
+        | grep -v -w -F -f <(echo "${DATABASE_TO_USE}" | tr ' ' '\n') \
         | xargs docker volume rm --force \
         | xargs echo "Volumes removed:"
     success "Server is stoped."
 }
 
 save_db() {
-    if [ "$NUM_DATABASES_TO_USE" -gt 1 ] ; then
-        warn "Multiple databases configured: $DATABASE_TO_USE. Saving databases not supported."
-        return;
-    fi
+    local db_to_save="$1"
 
-    [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
-        && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
+    [ -z "$(${DOCKER_COMPOSE_CALL} ps -q ${db_to_save})" ] \
+        && warn "Database server '${db_to_save}' is not running." && exit 0
 
     local envs=""
-    [ "$ARCHIVE_DATABASES" -eq 1 ] && env="-e ARCHIVE=1 "
-    [ ! -z "$ARCHIVE_FOLDER" ] && env="${env}-e ARCHIVE_FOLDER=$ARCHIVE_FOLDER "
+    [ "${ARCHIVE_DATABASES}" -eq 1 ] && env="-e ARCHIVE=1 "
+    [ ! -z "${ARCHIVE_FOLDER}" ] && env="${env}-e ARCHIVE_FOLDER=${ARCHIVE_FOLDER} "
 
     local shell="sh"
-    case "$DATABASE_TO_USE" in
-        mysql57|mysql80)
+    case "${db_to_save}" in
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
             shell="bash"
             ;;
     esac
 
     warn "Save databases:"
-    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/backup-databases"
+    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_${db_to_save} /usr/bin/env ${shell} -c "/usr/local/bin/backup-databases"
 }
 
 delete_obsolete_images() {
     local OBSOLETE_IMAGES="$(docker images -f "dangling=true" -q)"
 
-    [ -z "$OBSOLETE_IMAGES" ] \
+    [ -z "${OBSOLETE_IMAGES}" ] \
         && success "No obsolete images found." \
         && exit 0
 
     warn "Found obsolete Images:"
     info "$OBSOLETE_IMAGES"
 
-    local ERROR_DELETE_OBSOLETE="$(docker rmi $OBSOLETE_IMAGES >/dev/null 2>&1)"
+    local ERROR_DELETE_OBSOLETE="$(docker rmi ${OBSOLETE_IMAGES} >/dev/null 2>&1)"
 
-    [ -z "$ERROR_DELETE_OBSOLETE" ] \
+    [ -z "${ERROR_DELETE_OBSOLETE}" ] \
         && success "Obsolete images deleted." \
         || error "$ERROR_DELETE_OBSOLETE"
 }
 
 create_certs() {
-    [ ! -z "$SSL_LOCALDOMAINS" ] \
-        && MINICA_DEFAULT_DOMAINS="$MINICA_DEFAULT_DOMAINS,$SSL_LOCALDOMAINS"
+    [ ! -z "${SSL_LOCALDOMAINS}" ] \
+        && MINICA_DEFAULT_DOMAINS="${MINICA_DEFAULT_DOMAINS},${SSL_LOCALDOMAINS}"
 
-    [ ! -z "$SSL_DOMAINS" ] \
-        && MINICA_DEFAULT_DOMAINS="$MINICA_DEFAULT_DOMAINS $SSL_DOMAINS"
+    [ ! -z "${SSL_DOMAINS}" ] \
+        && MINICA_DEFAULT_DOMAINS="${MINICA_DEFAULT_DOMAINS} ${SSL_DOMAINS}"
 
-    MINICA_DEFAULT_DOMAINS="$(echo "$MINICA_DEFAULT_DOMAINS" | sed "s/, /,/g")"
+    MINICA_DEFAULT_DOMAINS="$(echo "${MINICA_DEFAULT_DOMAINS}" | sed "s/, /,/g")"
 
     warn "Start creating SSL certificates:"
 
-    for domain in $MINICA_DEFAULT_DOMAINS; do
-        local first_domain=$(echo $domain | cut -d ',' -f1)
+    for domain in ${MINICA_DEFAULT_DOMAINS}; do
+        local first_domain=$(echo ${domain} | cut -d ',' -f1)
 
         info ""
         log "domain: $domain"
         log "first_domain: $first_domain"
 
-        if [ -d "$MINICA_BASEDIR/$first_domain" ]; then
+        if [ -d "${MINICA_BASEDIR}/${first_domain}" ]; then
             success "Skipping the creation of the certificate bundle because it exists, in:" "$MINICA_BASEDIR/$first_domain"
             info "-> Bundle for: $domain"
             continue
@@ -464,12 +517,12 @@ create_certs() {
         success "Create certificate bundle in:" "$MINICA_BASEDIR/$first_domain"
         info "-> Bundle for: $domain"
 
-        docker run --user $DOCKER_PASS_USER -it --rm \
-            -v "$MINICA_BASEDIR:/certs" \
+        docker run --user ${DOCKER_PASS_USER} -it --rm \
+            -v "${MINICA_BASEDIR}:/certs" \
             degobbis/minica \
             --ca-cert minica-root-ca.pem \
             --ca-key minica-root-ca-key.pem \
-            --domains $domain
+            --domains ${domain}
         echo
     done
 
@@ -479,37 +532,33 @@ create_certs() {
 }
 
 restore_db() {
-      if [ "$NUM_DATABASES_TO_USE" -gt 1 ] ; then
-          warn "Multiple databases configured: $DATABASE_TO_USE. Restoring databases not supported."
-          return;
-      fi
+    local db_to_restore="$1"
 
-    [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
-        && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
+    [ -z "$(${DOCKER_COMPOSE_CALL} ps -q ${db_to_restore})" ] \
+        && warn "Database server '$db_to_restore' is not running." && exit 0
 
     local shell="sh"
-    case "$DATABASE_TO_USE" in
-        mysql57|mysql80|mysql83|mysql84)
+    case "${db_to_restore}" in
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
             shell="bash"
             ;;
     esac
 
     warn "Restore databases:"
-    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_db /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
+    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_${db_to_restore} /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
 
 }
 
 update_images() {
-    local yaml_file_for_update="$DOCKER_LAMP_BASEDIR/.config/update-images.yml"
+    local yaml_file_for_update="${DOCKER_LAMP_BASEDIR}/.config/update-images.yml"
 
-    [ -f "$DOCKER_COMPOSE_YAML" ] && yaml_file_for_update="$DOCKER_COMPOSE_YAML"
+    [ -f "${DOCKER_COMPOSE_YAML}" ] && yaml_file_for_update="${DOCKER_COMPOSE_YAML}"
 
-    docker compose -f $yaml_file_for_update pull
+    docker compose -f ${yaml_file_for_update} pull
 }
 
 cli_container() {
-    local params="--user $DOCKER_PASS_USER "
-    local container_name="$CLI_CONTAINER"
+    local params="--user ${DOCKER_PASS_USER} "
     local shell="sh"
     local call_as_root="${AS_ROOT:-0}"
 
@@ -517,24 +566,17 @@ cli_container() {
     # TODO: Set it only on CLI call for CLI debugging
     local env=' -e XDEBUG_CONFIG= '
 
-    [ "$CLI_CONTAINER" = "php80" ] && env+=' -e XDEBUG_SESSION=1 '
-    [ "$CLI_CONTAINER" = "php81" ] && env+=' -e XDEBUG_SESSION=1 '
-    [ "$CLI_CONTAINER" = "php82" ] && env+=' -e XDEBUG_SESSION=1 '
-    [ "$CLI_CONTAINER" = "php83" ] && env+=' -e XDEBUG_SESSION=1 '
-    [ "$CLI_CONTAINER" = "php84" ] && env+=' -e XDEBUG_SESSION=1 '
+    case "${CLI_CONTAINER}" in
+        php80|php81|php82|php83|php84)
+            env+=' -e XDEBUG_SESSION=1 '
+            ;;
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
+            shell="bash"
+            params="--user 999:999 "
+            ;;
+    esac
 
-    if [ "$CLI_CONTAINER" = "db" ]; then
-        container_name="$DATABASE_TO_USE"
-
-        case "$DATABASE_TO_USE" in
-            mysql57|mysql80|mysql83)
-                shell="bash"
-                params="--user 999:999 "
-                ;;
-        esac
-    fi
-
-    [ -z "$($DOCKER_COMPOSE_CALL ps -q $container_name)" ] \
+    [ -z "$(${DOCKER_COMPOSE_CALL} ps -q ${CLI_CONTAINER})" ] \
         && warn "The container '$CLI_CONTAINER' is not running." && exit 0
 
     if [[ "$(docker context show)" = "desktop-linux" ]]; then
@@ -543,7 +585,7 @@ cli_container() {
         call_as_root="1"
     fi
 
-    [ "$call_as_root" -eq 1 ] && params="--privileged "
+    [ "${call_as_root}" -eq 1 ] && params="--privileged "
     [ "${CLI_WITH_XDEBUG:-0}" -eq 0 ] && env=""
 
     headline "Before starting CLI for '$CLI_CONTAINER'"
@@ -552,14 +594,14 @@ cli_container() {
     log "params: $params"
     log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 
-    [ ! -z "$COMMAND_TO_PASS" ] \
-        && docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env ${shell} -cx "$COMMAND_TO_PASS" \
+    [ ! -z "${COMMAND_TO_PASS}" ] \
+        && docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env ${shell} -cx "${COMMAND_TO_PASS}" \
         || docker exec -it ${params}${env}${COMPOSE_PROJECT_NAME}_${CLI_CONTAINER} /usr/bin/env ${shell}
 }
 
 quote () {
     local quoted=${1//\'/\'\\\'\'};
-    printf "'%s'" "$quoted"
+    printf "'%s'" "${quoted}"
 }
 
 # find . -maxdepth 1 -type f ! -name "*.md" ! -name "*.txt"

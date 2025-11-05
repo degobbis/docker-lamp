@@ -1,7 +1,6 @@
   mysql57:
-    image: degobbis/mysql57:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mysql57
-    hostname: ${MYSQL57_HOST_NAME}
+    image: degobbis/${MYSQL57_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MYSQL57_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${MYSQL57_DATA_VOLUME}:/var/lib/mysql
@@ -14,11 +13,11 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "${MYSQL57_PORT:-3306}:3306"
+      - "${MYSQL57_PORT:-3301}:3306"
     depends_on:
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MYSQL57_IPv4}
+        aliases: ${MYSQL57_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

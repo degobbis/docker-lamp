@@ -1,7 +1,6 @@
   mariadb114:
-    image: degobbis/mariadb114:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mariadb114
-    hostname: ${MARIADB114_HOST_NAME}
+    image: degobbis/${MARIADB114_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MARIADB114_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${MARIADB114_DATA_VOLUME}:/var/lib/mysql
@@ -19,6 +18,6 @@
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MARIADB114_IPv4}
+        aliases: ${MARIADB114_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

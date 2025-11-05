@@ -1,7 +1,6 @@
 volumes:
   pma:
-  db-data-dir:
-  phpsocket:
+  phpsocket: ${DATABASE_VOLUMES}
 
 networks:
   dlbridge:

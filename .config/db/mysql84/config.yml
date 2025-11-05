@@ -1,7 +1,6 @@
   mysql84:
-    image: degobbis/mysql84:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mysql84
-    hostname: ${MYSQL84_HOST_NAME}
+    image: degobbis/${MYSQL84_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MYSQL84_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/db/mysql84/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
@@ -15,11 +14,11 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "${MYSQL84_PORT:-3306}:3306"
+      - "${MYSQL84_PORT:-3309}:3306"
     depends_on:
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MYSQL84_IPv4}
+        aliases: ${MYSQL84_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

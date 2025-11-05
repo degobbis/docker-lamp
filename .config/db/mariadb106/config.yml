@@ -1,7 +1,6 @@
   mariadb106:
-    image: degobbis/mariadb106:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mariadb106
-    hostname: ${MARIADB106_HOST_NAME}
+    image: degobbis/${MARIADB106_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MARIADB106_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${MARIADB106_DATA_VOLUME}:/var/lib/mysql
@@ -14,11 +13,11 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "${MARIADB106_PORT:-3306}:3306"
+      - "${MARIADB106_PORT:-3304}:3306"
     depends_on:
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MARIADB106_IPv4}
+        aliases: ${MARIADB106_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

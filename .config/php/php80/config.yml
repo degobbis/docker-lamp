@@ -1,7 +1,6 @@
   php80:
     image: degobbis/php80:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php80
-    hostname: php80
     restart: unless-stopped
     links: ${DATABASE_LINKS}
       - mailcatcher
@@ -25,6 +24,7 @@
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_PHP80_IPv4}
+        aliases:
+          - php80
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

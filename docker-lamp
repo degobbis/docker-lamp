@@ -33,9 +33,9 @@ fi
 # Define the basedir for the .env file
 ENV_FILE_BASEDIR="$(pwd)"
 
-[ ! -w "$ENV_FILE_BASEDIR" ] && error "No write permissions for '$ENV_FILE_BASEDIR'" && exit 1
+[ ! -w "${ENV_FILE_BASEDIR}" ] && error "No write permissions for '$ENV_FILE_BASEDIR'" && exit 1
 
-ENV_FILE="$ENV_FILE_BASEDIR/.env"
+ENV_FILE="${ENV_FILE_BASEDIR}/.env"
 
 log "ENV_FILE: $ENV_FILE"
 
@@ -43,15 +43,15 @@ log "ENV_FILE: $ENV_FILE"
 DL_SUBNET="172.50.0.0/24"
 REMOTE_HOST_IP="0.0.0.0"
 
-if [ -f "$ENV_FILE" ]; then
-    ENV_FILE_LOADED="$(. $ENV_FILE 2>&1)"
+if [ -f "${ENV_FILE}" ]; then
+    ENV_FILE_LOADED="$(. ${ENV_FILE} 2>&1)"
 
-    [ ! -z "$ENV_FILE_LOADED" ] && error "Something is wrong in the '.env' file!" \
+    [ ! -z "${ENV_FILE_LOADED}" ] && error "Something is wrong in the '.env' file!" \
         && warn "-> $ENV_FILE_LOADED" \
         && exit 1
 
     # Load the user configuration
-    . $ENV_FILE
+    . ${ENV_FILE}
 else
     error "No '.env' file found in '$ENV_FILE_BASEDIR'!"
     warn "Please copy '$DOCKER_LAMP_BASEDIR/.env-example' to '$ENV_FILE' and define Your preferred configuration,"
@@ -59,40 +59,37 @@ else
     exit 1
 fi
 
-if [ ! -z "$USE_SUBNET" ]; then
-    DL_SUBNET="$USE_SUBNET"
+if [ ! -z "${USE_SUBNET}" ]; then
+    DL_SUBNET="${USE_SUBNET}"
 fi
 
 create_gateway_and_container_ipv4
 
 # Fix for relative path on 'APP_BASEDIR'
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
-    NEW_APP_BASEDIR="$( cd -- "$APP_BASEDIR" >/dev/null 2>&1 ; pwd -P )/$(basename "$APP_BASEDIR")"
+    NEW_APP_BASEDIR="$( cd -- "${APP_BASEDIR}" >/dev/null 2>&1 ; pwd -P )/$(basename "${APP_BASEDIR}")"
 else
-    NEW_APP_BASEDIR="$(readlink -f "$APP_BASEDIR")"
+    NEW_APP_BASEDIR="$(readlink -f "${APP_BASEDIR}")"
 fi
 
 log "APP_BASEDIR: $APP_BASEDIR"
 log "NEW_APP_BASEDIR: $NEW_APP_BASEDIR"
 
-if [ ! -d "$NEW_APP_BASEDIR" ]; then
+if [ ! -d "${NEW_APP_BASEDIR}" ]; then
     warn "'APP_BASEDIR=$APP_BASEDIR' defined in '$ENV_FILE' would be resolved as '$NEW_APP_BASEDIR'"
     error "'$NEW_APP_BASEDIR' does not exists!"
     exit 1
 fi
 
-APP_BASEDIR=$NEW_APP_BASEDIR
-DOCKER_PASS_USER="$APP_USER_ID:$APP_GROUP_ID"
+APP_BASEDIR="${NEW_APP_BASEDIR}"
+DOCKER_PASS_USER="${APP_USER_ID}:${APP_GROUP_ID}"
 
-DOCKER_COMPOSE_YAML="$ENV_FILE_BASEDIR/compose.yml"
-DOCKER_COMPOSE_CALL="docker compose --env-file $ENV_FILE -f $DOCKER_COMPOSE_YAML"
+DOCKER_COMPOSE_YAML="${ENV_FILE_BASEDIR}/compose.yml"
+DOCKER_COMPOSE_CALL="docker compose --env-file ${ENV_FILE} -f ${DOCKER_COMPOSE_YAML}"
 
 log "DOCKER_COMPOSE_CALL: $DOCKER_COMPOSE_CALL"
 
 MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
-
-NUM_DATABASES_TO_USE=$(echo $(c() { echo $#; }; c $DATABASE_TO_USE));
-log "NUM_DATABASES_TO_USE: $NUM_DATABASES_TO_USE"
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
@@ -110,8 +107,8 @@ case "$1" in
         COMMAND="$1"
         ARGUMENT=""
         shift
-        LONG="php: httpd: db: db-port: map-80-443: project-name: bind-off bind-on"
-        SHORT="p: H: d: D: m: P:"
+        LONG="php: httpd: map-80-443: bind-off bind-on"
+        SHORT="p: H: m:"
         ;;
     shutdown)
         [ "$2" = "--help" ] && usage $1 | more -d && exit 0
@@ -161,35 +158,35 @@ log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 log "SHORT: $SHORT"
 log "LONG: $LONG"
 
-[ -z "$COMMAND" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
+[ -z "${COMMAND}" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
 
-if [ "$COMMAND" = "start" ] \
-    && ([ -f "$DOCKER_COMPOSE_YAML" ] && [ ! -z "$($DOCKER_COMPOSE_CALL ps -q)" ]); then
+if [ "${COMMAND}" = "start" ] \
+    && ([ -f "${DOCKER_COMPOSE_YAML}" ] && [ ! -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ]); then
         error "Server is already running."
         exit 1
 fi
 
-if [ "$COMMAND" = "stop" ]; then
+if [ "${COMMAND}" = "stop" ]; then
     stop_server
     exit 0
 fi
 
-if [ "$COMMAND" = "create-certs" ]; then
+if [ "${COMMAND}" = "create-certs" ]; then
     create_certs
     exit 0
 fi
 
-if [ "$COMMAND" = "update-images" ]; then
+if [ "${COMMAND}" = "update-images" ]; then
     update_images
     exit 0
 fi
 
-if [ "$COMMAND" = "delete-obsolete-images" ]; then
+if [ "${COMMAND}" = "delete-obsolete-images" ]; then
     delete_obsolete_images
     exit 0
 fi
 
-if [ "$COMMAND" = "restore-db" ]; then
+if [ "${COMMAND}" = "restore-db" ]; then
     restore_db
     exit 0
 fi
@@ -199,7 +196,7 @@ log "\$@:" "$@"
 log "\$1: $1"
 log "\$2: $2"
 
-OPTIONS=$(getopt -q -o "$SHORT" -l "$LONG" -n "$0" -- "$@")
+OPTIONS=$(getopt -q -o "${SHORT}" -l "${LONG}" -n "$0" -- "$@")
 
 if [ "$?" -eq 1 ]; then
     error "The parameter" "$@" "is not set correctly!"
@@ -209,20 +206,20 @@ fi
 
 log "\$OPTIONS: $OPTIONS"
 
-eval set -- "$OPTIONS"
+eval set -- "${OPTIONS}"
 
 headline "after getopt"
 log "\$@:" "$@"
 log "\$1: $1"
 log "\$2: $2"
 
-SHORT="-$(echo "$SHORT" | sed "s/://g" | sed "s/ / -/g")"
+SHORT="-$(echo "${SHORT}" | sed "s/://g" | sed "s/ / -/g")"
 log "SHORT:" "$SHORT"
 
-LONG="--$(echo "$LONG" | sed "s/://g" | sed "s/ / --/g")"
+LONG="--$(echo "${LONG}" | sed "s/://g" | sed "s/ / --/g")"
 log "LONG:" "$LONG"
 
-CASE="$SHORT $LONG"
+CASE="${SHORT} ${LONG}"
 log "CASE:" "$CASE"
 
 headline "Evaluate parameters"
@@ -265,19 +262,6 @@ while true; do
                 log "set ARCHIVE_FOLDER to '$2'"
                 shift 2
                 ;;
-
-            -D | --db-port)
-                DATABASE_PORT="$2"
-                shift 2
-                ;;
-            -d | --db)
-                DATABASE_TO_USE="$2"
-                shift 2
-                ;;
-            -P | --project-name)
-                COMPOSE_PROJECT_NAME="$2"
-                shift 2
-                ;;
             -r | --as-root)
                 AS_ROOT="1"
                 log "enter CLI as root"
@@ -305,22 +289,22 @@ if [ -n "$1" ]; then
     exit 1
 fi
 
-if [ "$COMMAND" = "save-db" ]; then
+if [ "${COMMAND}" = "save-db" ]; then
     save_db
     exit 0
 fi
 
-if [ "$COMMAND" = "cli" ]; then
+if [ "${COMMAND}" = "cli" ]; then
     cli_container
     exit 0
 fi
 
-if [ "$COMMAND" = "shutdown" ]; then
+if [ "${COMMAND}" = "shutdown" ]; then
     shutdown_server
     exit 0
 fi
 
-PHP_TO_USE=$(echo "$PHP_TO_USE" | sed "s/, / /g" | sed "s/,/ /g")
+PHP_TO_USE=$(echo "${PHP_TO_USE}" | sed "s/, / /g" | sed "s/,/ /g")
 
 headline "after editing the parameters"
 log "\$@:" "$@"
@@ -329,9 +313,11 @@ log "HTTPD_TO_USE: $HTTPD_TO_USE"
 log "PHP_TO_USE: $PHP_TO_USE"
 log "USE_BIND: $USE_BIND"
 
-if [ ! -z "$MAP_PORT_80_443" ]; then
-    MAP_PORT_80=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT")
-    MAP_PORT_443=$(eval echo "\$$(echo "${MAP_PORT_80_443}" | awk '{print toupper($0)}')_PORT_SSL")
+if [ ! -z "${MAP_PORT_80_443}" ]; then
+    MAP_PORT_80="${MAP_PORT_80_443@^^}_PORT"
+    MAP_PORT_80="${!MAP_PORT_80}"
+    MAP_PORT_443="${MAP_PORT_80_443@^^}_PORT_SSL"
+    MAP_PORT_443="${!MAP_PORT_443}"
 
     HTTPD_PORTS_LIST="80:80 443:443"
 fi
@@ -352,7 +338,12 @@ HTTPD_PORT_PHP83="8083"
 HTTPD_SSL_PORT_PHP83="8483"
 HTTPD_PORT_PHP84="8084"
 HTTPD_SSL_PORT_PHP84="8484"
-HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $PMA_PORT:8000 $PMA_SSL_PORT:8400"
+HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${PMA_PORT}:8000 ${PMA_SSL_PORT}:8400"
+
+# Sort databases and remove duplicates
+DATABASE_TO_USE="$(echo $(echo ${DATABASE_TO_USE} | tr ' ' '\n' | sort -u | tr '\n' ' '))"
+# Define the database volumes (one for each)
+export DATABASE_VOLUMES=$(get_yaml_volumes "${DATABASE_TO_USE}")
 
 # Define the LOAD_YAML variable with the base YAML-Config
 add_yaml_to_load base
@@ -362,7 +353,7 @@ add_yaml_to_load phpmyadmin
 HTTPD_LINKS_LIST="phpmyadmin"
 
 # Add mailcatcher YAML-Config to LOAD_YAML
-if [ "$USE_MAILCATCHER" -eq 1 ]; then
+if [ "${USE_MAILCATCHER}" -eq 1 ]; then
     add_yaml_to_load mailcatcher
 fi
 
@@ -374,68 +365,67 @@ if [ "$USE_BIND" -eq 1 ]; then
     INIT_DL_BIND="--scale bind=1"
 fi
 
-for var in $PHP_TO_USE; do
-    PHP_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT")
-    PHP_SSL_PORT=$(eval echo "\$$(echo "${var}" | awk '{print toupper($0)}')_PORT_SSL")
-    HTTPD_PHP_PORT=$(eval echo "\$HTTPD_PORT_$(echo "${var}" | awk '{print toupper($0)}')")
-    HTTPD_PHP_SSL_PORT=$(eval echo "\$HTTPD_SSL_PORT_$(echo "${var}" | awk '{print toupper($0)}')")
+for var in ${PHP_TO_USE}; do
+    PHP_PORT="${var@^^}_PORT"
+    PHP_SSL_PORT="${var@^^}_PORT_SSL"
+    HTTPD_PHP_PORT="HTTPD_PORT_${var@^^}"
+    HTTPD_PHP_SSL_PORT="HTTPD_SSL_PORT_${var@^^}"
 
     # Add php versions YAML-Config to LOAD_YAML
-    add_yaml_to_load php/$var
+    add_yaml_to_load php/${var}
 
     # Define the ports to map into the HTTPD container
-    HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $PHP_PORT:$HTTPD_PHP_PORT $PHP_SSL_PORT:$HTTPD_PHP_SSL_PORT"
+    HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${!PHP_PORT}:${!HTTPD_PHP_PORT} ${!PHP_SSL_PORT}:${!HTTPD_PHP_SSL_PORT}"
 done
 
 # Exdend the links list of the HTTPD container with the loaded php versions
-HTTPD_LINKS_LIST="$HTTPD_LINKS_LIST $PHP_TO_USE"
+HTTPD_LINKS_LIST="${HTTPD_LINKS_LIST} ${PHP_TO_USE}"
 
 # Exdend the ports list of the HTTPD container with the custom ports defined
-[ ! -z "$HTTPD_CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $HTTPD_CUSTOM_PORTS"
+[ ! -z "${HTTPD_CUSTOM_PORTS}" ] && HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${HTTPD_CUSTOM_PORTS}"
 
 # Add database YAML-Config to LOAD_YAML
+NUM_DATABASES_TO_USE=$(c() { echo $#; }; c ${DATABASE_TO_USE})
+log "NUM_DATABASES_TO_USE: $NUM_DATABASES_TO_USE"
 
-if [ "$NUM_DATABASES_TO_USE" -gt 1 ]; then
-  for var in $DATABASE_TO_USE; do
+if [ "${NUM_DATABASES_TO_USE}" -ge 1 ]; then
+  for var in ${DATABASE_TO_USE}; do
+    if [ -z "${DATABASE_DEFAULT}" ]; then
+        DATABASE_DEFAULT="${var}"
+    fi
+
     # With multiple databases, the host name is the database name
-    host_name="${var@U}_HOST_NAME"
-    declare -g ${host_name}=$var
+    host_name="${var@^^}_HOST_NAME"
+    declare -g ${host_name}="${var}"
 
     # With multiple databases, the database port is expected to be defined in the .env file
-    port_name="${var@U}_PORT"
+    port_name="${var@^^}_PORT"
 
-    # With just one database, the volume is a named volume with name "db-data-dir"
-    volume_name="${var@U}_DATA_VOLUME"
-    declare -g ${volume_name}="${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/db-data-dir/${var}"
+    # Each database get his own volume with the database name
+    volume_name="${var@^^}_DATA_VOLUME"
+    declare -g ${volume_name}="${var}"
 
-    # With just one database, the dump directory is "initDB"
-    initdb_name="${var@U}_DUMP_DIR"
+    # Declare the database name as hostname
+    hostname_aliases="${var@^^}_ALIASES"
+    declare -g ${hostname_aliases}="$(get_yaml_aliases "${var}")"
+
+    # Add "mysql" as hostname alias for the default database
+    if [ "${var}" == "${DATABASE_DEFAULT}" ]; then
+        declare -g ${hostname_aliases}="$(get_yaml_list "${var} mysql")"
+    fi
+
+    # Each database get his own dump directory in "initDB"
+    initdb_name="${var@^^}_DUMP_DIR"
     declare -g ${initdb_name}="initDB/${var}"
 
-    log "Use database ${var}:${!port_name} in host ${!host_name}"
+    success "The database \"${var}\" can be used as followed:"
+    info " - Inside the docker-lamp with \"${var}:3306\" (for this database also \"mysql:3306\" is possible)"
+    info " - Outside the docker-lamp with localhost:${!port_name}"
 
     add_yaml_to_load db/$var
   done
 else
-  # With just one database, the host name is always "mysql"
-  host_name="${DATABASE_TO_USE@U}_HOST_NAME"
-  declare -g ${host_name}=mysql
-
-  # With just one database, the port name is always $DATABASE_PORT
-  port_name="${DATABASE_TO_USE@U}_PORT"
-  declare -g ${port_name}=$DATABASE_PORT
-
-  # With just one database, the volume is a named volume with name "db-data-dir"
-  volume_name="${DATABASE_TO_USE@U}_DATA_VOLUME"
-  declare -g ${volume_name}=db-data-dir
-
-  # With just one database, the dump directory is "initDB"
-  initdb_name="${DATABASE_TO_USE@U}_DUMP_DIR"
-  declare -g ${initdb_name}=initDB
-
-  log "Use database ${DATABASE_TO_USE}:${!port_name} in host ${!host_name}"
-
-  add_yaml_to_load db/$DATABASE_TO_USE
+    warn "There is no database defined in .env!"
 fi
 
 

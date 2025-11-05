@@ -1,7 +1,6 @@
   php56:
     image: degobbis/php56:latest
     container_name: ${COMPOSE_PROJECT_NAME}_php56
-    hostname: php56
     restart: unless-stopped
     links: ${DATABASE_LINKS}
       - mailcatcher
@@ -26,6 +25,7 @@
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_PHP56_IPv4}
+        aliases:
+          - php56
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

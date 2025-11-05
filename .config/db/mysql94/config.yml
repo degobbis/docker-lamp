@@ -1,7 +1,6 @@
   mysql94:
-    image: degobbis/mysql94:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mysql94
-    hostname: ${MYSQL94_HOST_NAME}
+    image: degobbis/${MYSQL94_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MYSQL94_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/db/mysql94/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
@@ -20,6 +19,6 @@
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MYSQL94_IPv4}
+        aliases: ${MYSQL94_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

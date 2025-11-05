@@ -1,7 +1,6 @@
   mysql83:
-    image: degobbis/mysql83:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_mysql83
-    hostname: ${MYSQL83_HOST_NAME}
+    image: degobbis/${MYSQL83_HOST_NAME}:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_${MYSQL83_HOST_NAME}
     restart: unless-stopped
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/db/mysql83/my.cnf:/etc/mysql/conf.d/xxx-docker-lamp.cnf
@@ -15,11 +14,11 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "${MYSQL83_PORT:-3306}:3306"
+      - "${MYSQL83_PORT:-3308}:3306"
     depends_on:
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MYSQL83_IPv4}
+        aliases: ${MYSQL83_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

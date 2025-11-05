@@ -1,7 +1,6 @@
   mailcatcher:
     image: mailhog/mailhog:latest
     container_name: ${COMPOSE_PROJECT_NAME}_mailcatcher
-    hostname: mailcatcher
     restart: unless-stopped
     ports:
       - "${SURFACE_PORT:-8025}:8025"
@@ -10,6 +9,7 @@
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_MAILCATCHER_IPv4}
+        aliases:
+          - mailcatcher
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

@@ -1,12 +1,11 @@
   phpmyadmin:
     image: phpmyadmin:fpm-alpine
     container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
-    hostname: phpmyadmin
     restart: unless-stopped
     links: ${DATABASE_LINKS}
     volumes:
-      - ${DOCKER_LAMP_BASEDIR}/.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
-      - pma:/var/www/html
+    - ${DOCKER_LAMP_BASEDIR}/.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
+    - pma:/var/www/html
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
@@ -17,9 +16,10 @@
       UPLOAD_LIMIT: ${PMA_UPLOAD_LIMIT:-512M}
       MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD:-root}
     depends_on:
-      - bind-internal
+    - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_PMA_IPv4}
+        aliases:
+        - phpmyadmin
     dns:
-      - ${DL_BIND_INTERNAL_IPv4:-}
+    - ${DL_BIND_INTERNAL_IPv4:-}
