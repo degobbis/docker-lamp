@@ -1,11 +1,11 @@
   mariadb104:
     image: degobbis/mariadb104:latest
-    container_name: ${COMPOSE_PROJECT_NAME}_db
-    hostname: mysql
+    container_name: ${COMPOSE_PROJECT_NAME}_mariadb104
+    hostname: ${MARIADB104_HOST_NAME}
     restart: unless-stopped
     volumes:
-      - db-data-dir:/var/lib/mysql
-      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/initDB:/docker-entrypoint-initdb.d
+      - ${MARIADB104_DATA_VOLUME}:/var/lib/mysql
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/${MARIADB104_DUMP_DIR}:/docker-entrypoint-initdb.d
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
@@ -14,11 +14,11 @@
       APP_GROUP_ID: ${APP_GROUP_ID:-1000}
       INIT_DB_BY_SCRIPT: 1
     ports:
-      - "${DATABASE_PORT:-3306}:3306"
+      - "${MARIADB104_PORT:-3306}:3306"
     depends_on:
       - bind-internal
     networks:
       dlbridge:
-        ipv4_address: ${DL_DB_IPv4}
+        ipv4_address: ${DL_MARIADB104_IPv4}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

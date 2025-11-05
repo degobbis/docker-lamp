@@ -3,8 +3,7 @@
     container_name: ${COMPOSE_PROJECT_NAME}_php56
     hostname: php56
     restart: unless-stopped
-    links:
-      - ${DATABASE_TO_USE}
+    links: ${DATABASE_LINKS}
       - mailcatcher
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/php/sendmail/mhsendmail:/usr/local/bin/mhsendmail

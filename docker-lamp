@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Define debug mode.
-DEBUG="0"
+DEBUG="${DL_DEBUG:-0}"
 
 # Define the basedir for the docker compose.
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
@@ -91,6 +91,8 @@ log "DOCKER_COMPOSE_CALL: $DOCKER_COMPOSE_CALL"
 
 MINICA_DEFAULT_DOMAINS="localdomains,localhost,joomla.local,joomla.test,*.joomla.local,*.joomla.test,wp.local,wp.test,*.wp.local,*.wp.test,wpms.local,wpms.test,*.wpms.local,*.wpms.test"
 
+NUM_DATABASES_TO_USE=$(echo $(c() { echo $#; }; c $DATABASE_TO_USE));
+log "NUM_DATABASES_TO_USE: $NUM_DATABASES_TO_USE"
 
 # define the command, the argument and the parameters allowed for the command
 case "$1" in
@@ -392,7 +394,50 @@ HTTPD_LINKS_LIST="$HTTPD_LINKS_LIST $PHP_TO_USE"
 [ ! -z "$HTTPD_CUSTOM_PORTS" ] && HTTPD_PORTS_LIST="$HTTPD_PORTS_LIST $HTTPD_CUSTOM_PORTS"
 
 # Add database YAML-Config to LOAD_YAML
-add_yaml_to_load db/$DATABASE_TO_USE
+
+if [ "$NUM_DATABASES_TO_USE" -gt 1 ]; then
+  for var in $DATABASE_TO_USE; do
+    # With multiple databases, the host name is the database name
+    host_name="${var@U}_HOST_NAME"
+    declare -g ${host_name}=$var
+
+    # With multiple databases, the database port is expected to be defined in the .env file
+    port_name="${var@U}_PORT"
+
+    # With just one database, the volume is a named volume with name "db-data-dir"
+    volume_name="${var@U}_DATA_VOLUME"
+    declare -g ${volume_name}="${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}/db-data-dir/${var}"
+
+    # With just one database, the dump directory is "initDB"
+    initdb_name="${var@U}_DUMP_DIR"
+    declare -g ${initdb_name}="initDB/${var}"
+
+    log "Use database ${var}:${!port_name} in host ${!host_name}"
+
+    add_yaml_to_load db/$var
+  done
+else
+  # With just one database, the host name is always "mysql"
+  host_name="${DATABASE_TO_USE@U}_HOST_NAME"
+  declare -g ${host_name}=mysql
+
+  # With just one database, the port name is always $DATABASE_PORT
+  port_name="${DATABASE_TO_USE@U}_PORT"
+  declare -g ${port_name}=$DATABASE_PORT
+
+  # With just one database, the volume is a named volume with name "db-data-dir"
+  volume_name="${DATABASE_TO_USE@U}_DATA_VOLUME"
+  declare -g ${volume_name}=db-data-dir
+
+  # With just one database, the dump directory is "initDB"
+  initdb_name="${DATABASE_TO_USE@U}_DUMP_DIR"
+  declare -g ${initdb_name}=initDB
+
+  log "Use database ${DATABASE_TO_USE}:${!port_name} in host ${!host_name}"
+
+  add_yaml_to_load db/$DATABASE_TO_USE
+fi
+
 
 echo
 log "HTTPD_PORTS_LIST: $HTTPD_PORTS_LIST"
@@ -400,6 +445,7 @@ log "HTTPD_LINKS_LIST: $HTTPD_LINKS_LIST"
 
 export HTTPD_PORTS=$(get_yaml_list "$HTTPD_PORTS_LIST")
 export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
+export DATABASE_LINKS=$(get_yaml_list "$DATABASE_TO_USE")
 
 echo
 log "HTTPD_PORTS: $HTTPD_PORTS"

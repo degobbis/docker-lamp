@@ -291,13 +291,26 @@ create_gateway_and_container_ipv4() {
     DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
     DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
     DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
-    DL_PHP56_IPv4="${_ip4%.*}.$((${_ip4##*.} + 8))"
-    DL_PHP74_IPv4="${_ip4%.*}.$((${_ip4##*.} + 9))"
-    DL_PHP80_IPv4="${_ip4%.*}.$((${_ip4##*.} + 10))"
-    DL_PHP81_IPv4="${_ip4%.*}.$((${_ip4##*.} + 11))"
-    DL_PHP82_IPv4="${_ip4%.*}.$((${_ip4##*.} + 12))"
-    DL_PHP83_IPv4="${_ip4%.*}.$((${_ip4##*.} + 13))"
-    DL_PHP84_IPv4="${_ip4%.*}.$((${_ip4##*.} + 14))"
+
+    seq=8
+    for var in $PHP_TO_USE; do
+      # Construct name of environment variable
+      IPv4_NAME="DL_${var@U}_IPv4"
+      # Declare global variable with dynamic name and assign address
+      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+      seq=$((seq + 1))
+    done
+
+    seq=15
+    for var in $DATABASE_TO_USE; do
+      # Construct name of environment variable address
+      IPv4_NAME="DL_${var@U}_IPv4"
+      # Declare global variable with dynamic name and assign
+      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+      seq=$((seq + 1))
+    done
 
     #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
     DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
@@ -384,6 +397,11 @@ stop_server() {
 }
 
 save_db() {
+    if [ "$NUM_DATABASES_TO_USE" -gt 1 ] ; then
+        warn "Multiple databases configured: $DATABASE_TO_USE. Saving databases not supported."
+        return;
+    fi
+
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
         && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
 
@@ -461,6 +479,11 @@ create_certs() {
 }
 
 restore_db() {
+      if [ "$NUM_DATABASES_TO_USE" -gt 1 ] ; then
+          warn "Multiple databases configured: $DATABASE_TO_USE. Restoring databases not supported."
+          return;
+      fi
+
     [ -z "$($DOCKER_COMPOSE_CALL ps -q $DATABASE_TO_USE)" ] \
         && warn "Database server '$DATABASE_TO_USE' is not running." && exit 0
 

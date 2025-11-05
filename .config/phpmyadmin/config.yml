@@ -3,8 +3,7 @@
     container_name: ${COMPOSE_PROJECT_NAME}_phpmyadmin
     hostname: phpmyadmin
     restart: unless-stopped
-    links:
-      - ${DATABASE_TO_USE}
+    links: ${DATABASE_LINKS}
     volumes:
       - ${DOCKER_LAMP_BASEDIR}/.config/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php:rw
       - pma:/var/www/html
