@@ -371,32 +371,44 @@ check_override_folders() {
 
 iterate_databases() {
     local _command="$1"
+    local _db_to_restore="$2"
 
-    for var in ${DATABASE_TO_USE}; do
-        if [ "${_command}" == "restore" ]; then
-            local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
-            [ -n "${_db_volume_exist}" ] && restore_db "${var}"
-        fi
+    if [ "${_command}" == "restore" ]; then
+        for var in ${_db_to_restore}; do
+            restore_db "${var}"
+        done
+    fi
 
-        if [ "${_command}" == "save" ]; then
+    if [ "${_command}" == "save" ]; then
+        for var in ${DATABASE_TO_USE}; do
             save_db "${var}"
-        fi
-    done
+        done
+    fi
 }
 
 start_server() {
+    local _db_volume_exist=""
+    local _db_to_restore=""
+
     check_override_folders
 
     #if [ "$USE_BIND" -eq 1 ]; then
         create_certs
     #fi
 
+    for var in ${DATABASE_TO_USE}; do
+        local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
+        [ -z "${_db_volume_exist}" ] && _db_to_restore="${_db_to_restore} ${var}"
+    done
+
+    _db_to_restore="$(echo ${_db_to_restore})"
+
     warn "Start server:"
     ${DOCKER_COMPOSE_CALL} up -d ${INIT_DL_BIND} --force-recreate \
         && success "Server started."
     info ""
 
-    iterate_databases "restore"
+    iterate_databases "restore" "${_db_to_restore}"
 }
 
 restart_server() {

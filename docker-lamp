@@ -410,16 +410,19 @@ if [ "${NUM_DATABASES_TO_USE}" -ge 1 ]; then
     declare -g ${hostname_aliases}="$(get_yaml_aliases "${var}")"
 
     # Add "mysql" as hostname alias for the default database
+    is_default_db=""
     if [ "${var}" == "${DATABASE_DEFAULT}" ]; then
         declare -g ${hostname_aliases}="$(get_yaml_aliases "${var} mysql")"
+        is_default_db=" (for this database also \"mysql:3306\" is possible)"
     fi
 
     # Each database get his own dump directory in "initDB"
     initdb_name="${var@U}_DUMP_DIR"
     declare -g ${initdb_name}="initDB/${var}"
 
+    info ""
     success "The database \"${var}\" can be used as followed:"
-    info " - Inside the docker-lamp with \"${var}:3306\" (for this database also \"mysql:3306\" is possible)"
+    info " - Inside the docker-lamp with \"${var}:3306\"${is_default_db}"
     info " - Outside the docker-lamp with localhost:${!port_name}"
 
     add_yaml_to_load db/$var
