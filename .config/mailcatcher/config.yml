@@ -9,6 +9,7 @@
       - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_MAILCATCHER_IPv4}
         aliases:
           - mailcatcher
     dns:

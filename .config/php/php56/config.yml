@@ -25,6 +25,7 @@
       - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_PHP56_IPv4}
         aliases:
           - php56
     dns:

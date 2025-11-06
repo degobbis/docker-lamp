@@ -297,7 +297,7 @@ get_yaml_volumes() {
         volumes="${volumes}\n  ${volume}:"
     done
 
-    printf "${volume}"
+    printf "${volumes}"
 }
 
 create_gateway_and_container_ipv4() {
@@ -309,28 +309,28 @@ create_gateway_and_container_ipv4() {
     DL_BIND_INTERNAL_IPv4="${_ip4%.*}.$((${_ip4##*.} + 3))"
     DL_HTTPD_IPv4="${_ip4%.*}.$((${_ip4##*.} + 4))"
 #    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
-#    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
-#    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
+    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
+    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
 
-#    seq=8
-#    for var in $PHP_TO_USE; do
-#      # Construct name of environment variable
-#      IPv4_NAME="DL_${var@U}_IPv4"
-#      # Declare global variable with dynamic name and assign address
-#      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-#      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-#      seq=$((seq + 1))
-#    done
+    seq=20
+    for var in $PHP_TO_USE; do
+      # Construct name of environment variable
+      IPv4_NAME="DL_${var@U}_IPv4"
+      # Declare global variable with dynamic name and assign address
+      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+      seq=$((seq + 1))
+    done
 
-#    seq=15
-#    for var in $DATABASE_TO_USE; do
-#      # Construct name of environment variable address
-#      IPv4_NAME="DL_${var@U}_IPv4"
-#      # Declare global variable with dynamic name and assign
-#      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-#      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-#      seq=$((seq + 1))
-#    done
+    seq=40
+    for var in $DATABASE_TO_USE; do
+      # Construct name of environment variable address
+      IPv4_NAME="DL_${var@U}_IPv4"
+      # Declare global variable with dynamic name and assign
+      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
+      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
+      seq=$((seq + 1))
+    done
 
     #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
     DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
@@ -375,19 +375,12 @@ iterate_databases() {
     for var in ${DATABASE_TO_USE}; do
         if [ "${_command}" == "restore" ]; then
             local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
-            [ -z "${_db_volume_exist}" ] && restore_db ${var}
+            [ -n "${_db_volume_exist}" ] && restore_db "${var}"
         fi
 
         if [ "${_command}" == "save" ]; then
-            save_db ${var}
+            save_db "${var}"
         fi
-    done
-}
-
-check_db_volumes_on_start() {
-    for var in ${DATABASE_TO_USE}; do
-        local _db_volume_exist=$(docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} | grep "${COMPOSE_PROJECT_NAME}_${var}")
-        [ -z "${_db_volume_exist}" ] && restore_db ${var}
     done
 }
 
@@ -446,7 +439,7 @@ stop_server() {
     warn "Removing volumes:"
     docker volume ls --filter=name=${COMPOSE_PROJECT_NAME} \
         | awk 'NR > 1 {print $2}' \
-        | grep -v -w -F -f <(echo "${DATABASE_TO_USE}" | tr ' ' '\n') \
+        | grep -v -F -f <(echo "${DATABASE_TO_USE}" | tr ' ' '\n') \
         | xargs docker volume rm --force \
         | xargs echo "Volumes removed:"
     success "Server is stoped."
@@ -469,8 +462,9 @@ save_db() {
             ;;
     esac
 
-    warn "Save databases:"
+    warn "Save databases for ${db_to_save}:"
     docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_${db_to_save} /usr/bin/env ${shell} -c "/usr/local/bin/backup-databases"
+    info ""
 }
 
 delete_obsolete_images() {
@@ -544,8 +538,9 @@ restore_db() {
             ;;
     esac
 
-    warn "Restore databases:"
-    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_${db_to_restore} /usr/bin/env $shell -c "/usr/local/bin/restore-databases"
+    warn "Restore databases for ${db_to_restore}:"
+    docker exec -it --privileged ${COMPOSE_PROJECT_NAME}_${db_to_restore} /usr/bin/env ${shell} -c "/usr/local/bin/restore-databases"
+    info ""
 
 }
 

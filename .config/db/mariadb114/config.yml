@@ -18,6 +18,7 @@
       - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_MARIADB114_IPv4}
         aliases: ${MARIADB114_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

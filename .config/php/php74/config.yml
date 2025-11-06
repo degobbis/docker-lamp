@@ -24,6 +24,7 @@
       - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_PHP74_IPv4}
         aliases:
           - php74
     dns:

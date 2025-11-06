@@ -19,6 +19,7 @@
       - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_MYSQL84_IPv4}
         aliases: ${MYSQL84_ALIASES}
     dns:
       - ${DL_BIND_INTERNAL_IPv4:-}

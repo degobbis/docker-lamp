@@ -19,6 +19,7 @@
     - bind-internal
     networks:
       dlbridge:
+        ipv4_address: ${DL_PMA_IPv4}
         aliases:
         - phpmyadmin
     dns:

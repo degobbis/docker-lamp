@@ -314,9 +314,9 @@ log "PHP_TO_USE: $PHP_TO_USE"
 log "USE_BIND: $USE_BIND"
 
 if [ ! -z "${MAP_PORT_80_443}" ]; then
-    MAP_PORT_80="${MAP_PORT_80_443@^^}_PORT"
+    MAP_PORT_80="${MAP_PORT_80_443@U}_PORT"
     MAP_PORT_80="${!MAP_PORT_80}"
-    MAP_PORT_443="${MAP_PORT_80_443@^^}_PORT_SSL"
+    MAP_PORT_443="${MAP_PORT_80_443@U}_PORT_SSL"
     MAP_PORT_443="${!MAP_PORT_443}"
 
     HTTPD_PORTS_LIST="80:80 443:443"
@@ -366,10 +366,10 @@ if [ "$USE_BIND" -eq 1 ]; then
 fi
 
 for var in ${PHP_TO_USE}; do
-    PHP_PORT="${var@^^}_PORT"
-    PHP_SSL_PORT="${var@^^}_PORT_SSL"
-    HTTPD_PHP_PORT="HTTPD_PORT_${var@^^}"
-    HTTPD_PHP_SSL_PORT="HTTPD_SSL_PORT_${var@^^}"
+    PHP_PORT="${var@U}_PORT"
+    PHP_SSL_PORT="${var@U}_PORT_SSL"
+    HTTPD_PHP_PORT="HTTPD_PORT_${var@U}"
+    HTTPD_PHP_SSL_PORT="HTTPD_SSL_PORT_${var@U}"
 
     # Add php versions YAML-Config to LOAD_YAML
     add_yaml_to_load php/${var}
@@ -395,27 +395,27 @@ if [ "${NUM_DATABASES_TO_USE}" -ge 1 ]; then
     fi
 
     # With multiple databases, the host name is the database name
-    host_name="${var@^^}_HOST_NAME"
+    host_name="${var@U}_HOST_NAME"
     declare -g ${host_name}="${var}"
 
     # With multiple databases, the database port is expected to be defined in the .env file
-    port_name="${var@^^}_PORT"
+    port_name="${var@U}_PORT"
 
     # Each database get his own volume with the database name
-    volume_name="${var@^^}_DATA_VOLUME"
+    volume_name="${var@U}_DATA_VOLUME"
     declare -g ${volume_name}="${var}"
 
     # Declare the database name as hostname
-    hostname_aliases="${var@^^}_ALIASES"
+    hostname_aliases="${var@U}_ALIASES"
     declare -g ${hostname_aliases}="$(get_yaml_aliases "${var}")"
 
     # Add "mysql" as hostname alias for the default database
     if [ "${var}" == "${DATABASE_DEFAULT}" ]; then
-        declare -g ${hostname_aliases}="$(get_yaml_list "${var} mysql")"
+        declare -g ${hostname_aliases}="$(get_yaml_aliases "${var} mysql")"
     fi
 
     # Each database get his own dump directory in "initDB"
-    initdb_name="${var@^^}_DUMP_DIR"
+    initdb_name="${var@U}_DUMP_DIR"
     declare -g ${initdb_name}="initDB/${var}"
 
     success "The database \"${var}\" can be used as followed:"
