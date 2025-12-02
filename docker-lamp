@@ -157,6 +157,16 @@ case "$1" in
         ;;
 esac
 
+# Load a hook file to override functions and interact with the commands befor start
+if [ -f "${APP_BASEDIR}/hooks/pre_start.sh" ]; then
+    . ${APP_BASEDIR}/hooks/pre_start.sh
+    if [ $? -eq 0 ]; then
+        log "Hook is loaded: ${APP_BASEDIR}/hooks/pre_start.sh"
+    else
+        warn "Something went wrong with the hook: ${APP_BASEDIR}/hooks/pre_start.sh"
+    fi
+fi
+
 headline "----------------------"
 log "COMMAND: $COMMAND"
 log "ARGUMENT: $ARGUMENT"
