@@ -8,7 +8,7 @@
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php74/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
       - ${DOCKER_LAMP_BASEDIR}/.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
-      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-2.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-2.x.ini:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
       - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
       - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}/minica-root-ca.pem:/usr/local/share/ca-certificates/minica-root-ca.crt:rw
       - phpsocket:/run/php
