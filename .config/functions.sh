@@ -352,6 +352,7 @@ check_override_folders() {
         "initDB/mysql84"
         "initDB/mysql93"
         "initDB/mysql94"
+        "initDB/mysql95"
         "php/php56"
         "php/php74"
         "php/php80"
@@ -469,7 +470,7 @@ save_db() {
 
     local shell="sh"
     case "${db_to_save}" in
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
             shell="bash"
             ;;
     esac
@@ -545,7 +546,7 @@ restore_db() {
 
     local shell="sh"
     case "${db_to_restore}" in
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
             shell="bash"
             ;;
     esac
@@ -577,7 +578,7 @@ cli_container() {
         php80|php81|php82|php83|php84)
             env+=' -e XDEBUG_SESSION=1 '
             ;;
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
             shell="bash"
             params="--user 999:999 "
             ;;
