@@ -63,8 +63,6 @@ if [ ! -z "${USE_SUBNET}" ]; then
     DL_SUBNET="${USE_SUBNET}"
 fi
 
-create_gateway_and_container_ipv4
-
 # Fix for relative path on 'APP_BASEDIR'
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
     NEW_APP_BASEDIR="$( cd -- "${APP_BASEDIR}" >/dev/null 2>&1 ; pwd -P )/$(basename "${APP_BASEDIR}")"
@@ -166,6 +164,8 @@ if [ -f "${APP_BASEDIR}/hooks/pre_start.sh" ]; then
         warn "Something went wrong with the hook: ${APP_BASEDIR}/hooks/pre_start.sh"
     fi
 fi
+
+create_gateway_and_container_ipv4
 
 headline "----------------------"
 log "COMMAND: $COMMAND"
