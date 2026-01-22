@@ -300,7 +300,40 @@ get_yaml_volumes() {
     printf "${volumes}"
 }
 
+# Expected arguments in this order:
+# 1. Container names as array, e.g ("php80" "php81" "php82")
+# 2. Last IP octet to start, e.g "20" (172.50.0.20)
+# 3. IPv4 network address without range, e.g. "172.50.0.0"
+create_dynamic_container_ipv4() {
+    log_b "-> INIT create_dynamic_container_ipv4"
+
+    local _ipv4_name
+    local _images=$1
+    local _seq="$2"
+    local _ip4="$3"
+
+    log "-> _images: $_images"
+    log "-> _seq: $_seq"
+    log "-> _ip4: $_ip4"
+    log
+
+    for var in $_images; do
+      # Construct name of environment variable
+      _ipv4_name="DL_${var@U}_IPv4"
+      # Declare global variable with dynamic name and assign address
+      declare -g ${_ipv4_name}="${_ip4%.*}.$((${_ip4##*.} + $_seq))"
+      log "-> -> Container ${_ipv4_name}: $(eval echo "\$$_ipv4_name")"
+      _seq=$((_seq + 1))
+        log "-> -> var: $var"
+        log "-> -> _ipv4_name: $_ipv4_name"
+        log "-> -> _seq: $_seq"
+        log
+    done
+}
+
 create_gateway_and_container_ipv4() {
+    log_b "-> INIT create_gateway_and_container_ipv4"
+
     local _ip4="${DL_SUBNET%/*}"
     local _old_remote_ip="$REMOTE_HOST_IP"
 
@@ -308,33 +341,31 @@ create_gateway_and_container_ipv4() {
     DL_BIND_IPv4="${_ip4%.*}.$((${_ip4##*.} + 2))"
     DL_BIND_INTERNAL_IPv4="${_ip4%.*}.$((${_ip4##*.} + 3))"
     DL_HTTPD_IPv4="${_ip4%.*}.$((${_ip4##*.} + 4))"
-#    DL_DB_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
-    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
-    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 7))"
+    DL_PMA_IPv4="${_ip4%.*}.$((${_ip4##*.} + 5))"
+    DL_MAILCATCHER_IPv4="${_ip4%.*}.$((${_ip4##*.} + 6))"
 
-    seq=20
-    for var in $PHP_TO_USE; do
-      # Construct name of environment variable
-      IPv4_NAME="DL_${var@U}_IPv4"
-      # Declare global variable with dynamic name and assign address
-      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-      log "PHP Version ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-      seq=$((seq + 1))
-    done
+    log "-> _ip4: $_ip4"
+    log "-> _old_remote_ip: $_old_remote_ip"
+    log "-> REMOTE_HOST_IP: $REMOTE_HOST_IP"
+    log "-> DL_BIND_IPv4: $DL_BIND_IPv4"
+    log "-> DL_BIND_INTERNAL_IPv4: $DL_BIND_INTERNAL_IPv4"
+    log "-> DL_HTTPD_IPv4: $DL_HTTPD_IPv4"
+    log "-> DL_PMA_IPv4: $DL_PMA_IPv4"
+    log "-> DL_MAILCATCHER_IPv4: $DL_MAILCATCHER_IPv4"
+    log
 
-    seq=40
-    for var in $DATABASE_TO_USE; do
-      # Construct name of environment variable address
-      IPv4_NAME="DL_${var@U}_IPv4"
-      # Declare global variable with dynamic name and assign
-      declare -g ${IPv4_NAME}="${_ip4%.*}.$((${_ip4##*.} + $seq))"
-      log "Database ${IPv4_NAME}: $(eval echo "\$$IPv4_NAME")"
-      seq=$((seq + 1))
-    done
+    # Create PHP container ipv4 starting on x.x.x.20
+    create_dynamic_container_ipv4 "${PHP_TO_USE[@]}" "20" "$_ip4"
+
+    # Create Database container ipv4 starting on x.x.x.40
+    create_dynamic_container_ipv4 "${DATABASE_TO_USE[@]}" "40" "$_ip4"
 
     #DNS_A=${DNS_A//$_old_remote_ip/$REMOTE_HOST_IP}
     DNS_A=${DNS_A//$_old_remote_ip/127.0.0.1}
     DNS_B=${DNS_A//127.0.0.1/$DL_HTTPD_IPv4}
+
+   log "-> DNS_A: $DNS_A"
+   log "-> DNS_B: $DNS_B"
 }
 
 check_override_folders() {
@@ -346,6 +377,7 @@ check_override_folders() {
         "initDB/mariadb106"
         "initDB/mariadb1011"
         "initDB/mariadb114"
+        "initDB/mariadb118"
         "initDB/mysql57"
         "initDB/mysql80"
         "initDB/mysql83"
@@ -353,6 +385,7 @@ check_override_folders() {
         "initDB/mysql93"
         "initDB/mysql94"
         "initDB/mysql95"
+        "initDB/mysql96"
         "php/php56"
         "php/php74"
         "php/php80"
@@ -360,6 +393,7 @@ check_override_folders() {
         "php/php82"
         "php/php83"
         "php/php84"
+        "php/php85"
     )
 
     for folder in "${needed[@]}"; do
@@ -470,7 +504,7 @@ save_db() {
 
     local shell="sh"
     case "${db_to_save}" in
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95|mysql96)
             shell="bash"
             ;;
     esac
@@ -546,7 +580,7 @@ restore_db() {
 
     local shell="sh"
     case "${db_to_restore}" in
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95|mysql96)
             shell="bash"
             ;;
     esac
@@ -575,10 +609,10 @@ cli_container() {
     local env=' -e XDEBUG_CONFIG= '
 
     case "${CLI_CONTAINER}" in
-        php80|php81|php82|php83|php84)
+        php80|php81|php82|php83|php84|php85)
             env+=' -e XDEBUG_SESSION=1 '
             ;;
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95|mysql96)
             shell="bash"
             params="--user 999:999 "
             ;;

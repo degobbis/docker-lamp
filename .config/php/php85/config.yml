@@ -1,0 +1,31 @@
+  php85:
+    image: degobbis/php85:latest
+    container_name: ${COMPOSE_PROJECT_NAME}_php85
+    restart: unless-stopped
+    links: ${DATABASE_LINKS}
+      - mailcatcher
+    volumes:
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-fpm-global-overrides.conf:/usr/local/etc/php-fpm.d/zzz-php-fpm-global-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php85/php-fpm-overrides.conf:/usr/local/etc/php-fpm.d/zzzz-php-fpm-overrides.conf:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-global-overrides.ini:/usr/local/etc/php/conf.d/z00-php-global-overrides.ini:rw
+      - ${DOCKER_LAMP_BASEDIR}/.config/php/php-xdebug-3.x.ini:/usr/local/etc/php/conf.d/z10-php-xdebug-3.x.ini:rw
+      - ${APP_BASEDIR:-${DOCKER_LAMP_BASEDIR}/data}:/srv:rw
+      - ${MINICA_BASEDIR:-${APP_BASEDIR}/ca}/minica-root-ca.pem:/usr/local/share/ca-certificates/minica-root-ca.crt:rw
+      - phpsocket:/run/php
+    environment:
+      TZ: ${MY_TZ:-UTC}
+      LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
+      APP_USER_ID: ${APP_USER_ID:-1000}
+      APP_GROUP_ID: ${APP_GROUP_ID:-1000}
+      PHP_ENV: ${PHP_ENV:-development}
+      PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d/:/srv/php/:/srv/php/php85/"
+      XDEBUG_REMOTE_HOST: ${REMOTE_HOST_IP}
+    depends_on:
+      - bind-internal
+    networks:
+      dlbridge:
+        ipv4_address: ${DL_PHP85_IPv4}
+        aliases:
+          - php85
+    dns:
+      - ${DL_BIND_INTERNAL_IPv4:-}
