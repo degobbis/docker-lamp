@@ -1,4 +1,4 @@
-  mysql94:
+  mysql95:
     image: degobbis/${MYSQL95_HOST_NAME}:latest
     container_name: ${COMPOSE_PROJECT_NAME}_${MYSQL95_HOST_NAME}
     restart: unless-stopped
