@@ -9,7 +9,7 @@
     environment:
       TZ: ${MY_TZ:-UTC}
       LC_ALL: ${MY_LOCALES:-en_GB.UTF-8}
-      PMA_HOST: mysql
+      PMA_HOSTS: ${PMA_DB_HOSTS:-mysql}
       PMA_PORT: 3306
       MAX_EXECUTION_TIME: ${PMA_MAX_EXECUTION_TIME:-600}
       MEMORY_LIMIT: ${PMA_MEMORY_LIMIT:-512M}

@@ -367,6 +367,11 @@ export DATABASE_VOLUMES=$(get_yaml_volumes "${DATABASE_TO_USE}")
 # Define the LOAD_YAML variable with the base YAML-Config
 add_yaml_to_load base
 
+#
+# Set phpMyAdmin multiple hosts
+#
+PMA_DB_HOSTS="${DATABASE_TO_USE// /,}"
+
 # Add phpmyadmin YAML-Config to LOAD_YAML
 add_yaml_to_load phpmyadmin
 HTTPD_LINKS_LIST="phpmyadmin"
