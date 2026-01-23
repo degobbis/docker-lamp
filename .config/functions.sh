@@ -503,14 +503,21 @@ save_db() {
     [ ! -z "${ARCHIVE_FOLDER}" ] && env="${env}-e ARCHIVE_FOLDER=${ARCHIVE_FOLDER} "
 
     local shell="sh"
+    local mysql_options=""
     case "${db_to_save}" in
-        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94|mysql95|mysql96)
+        mysql57|mysql80|mysql83|mysql84|mysql93|mysql94)
             shell="bash"
+            ;;
+        mysql95|mysql96)
+            shell="bash"
+            mysql_options=" --set-gtid-purged=OFF"
             ;;
     esac
 
+    info "db_to_save: $db_to_save"
+    info "mysql_options: $mysql_options"
     warn "Save databases for ${db_to_save}:"
-    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_${db_to_save} /usr/bin/env ${shell} -c "/usr/local/bin/backup-databases"
+    docker exec -it --privileged ${envs}${COMPOSE_PROJECT_NAME}_${db_to_save} /usr/bin/env ${shell} -c "/usr/local/bin/backup-databases$mysql_options"
     info ""
 }
 
