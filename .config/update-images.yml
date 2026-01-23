@@ -25,6 +25,12 @@ services:
   php83:
     image: degobbis/php83:latest
 
+  php84:
+    image: degobbis/php84:latest
+
+  php85:
+    image: degobbis/php85:latest
+
   mariadb104:
     image: degobbis/mariadb104:latest
 
@@ -40,6 +46,9 @@ services:
   mariadb114:
     image: degobbis/mariadb114:latest
 
+  mariadb118:
+    image: degobbis/mariadb118:latest
+
   mysql57:
     image: degobbis/mysql57:latest
 
@@ -51,6 +60,18 @@ services:
 
   mysql84:
     image: degobbis/mysql84:latest
+
+  mysql93:
+    image: degobbis/mysql93:latest
+
+  mysql94:
+    image: degobbis/mysql94:latest
+
+  mysql95:
+    image: degobbis/mysql95:latest
+
+  mysql96:
+    image: degobbis/mysql96:latest
 
   mailcatcher:
     image: mailhog/mailhog:latest
