@@ -55,20 +55,8 @@ services:
   mysql80:
     image: degobbis/mysql80:latest
 
-  mysql83:
-    image: degobbis/mysql83:latest
-
   mysql84:
     image: degobbis/mysql84:latest
-
-  mysql93:
-    image: degobbis/mysql93:latest
-
-  mysql94:
-    image: degobbis/mysql94:latest
-
-  mysql95:
-    image: degobbis/mysql95:latest
 
   mysql96:
     image: degobbis/mysql96:latest
