@@ -251,6 +251,12 @@ log_w() {
         && warn "->" "$@"
 }
 
+# Bash 3.2 + 4.x compatible for MacOS
+# Usage: _upper=$(makeUppercase "$some_var")
+makeUppercase() {
+    echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
 add_yaml_to_load() {
     local YAML_LIST_TO_LOAD=${LOAD_YAML:-}
     local CONTAINER_PATH="$1"
@@ -319,7 +325,7 @@ create_dynamic_container_ipv4() {
 
     for var in $_images; do
       # Construct name of environment variable
-      _ipv4_name="DL_${var@U}_IPv4"
+      _ipv4_name="DL_$(makeUppercase "${var}")_IPv4"
       # Declare global variable with dynamic name and assign address
       declare -g ${_ipv4_name}="${_ip4%.*}.$((${_ip4##*.} + $_seq))"
       log "-> -> Container ${_ipv4_name}: $(eval echo "\$$_ipv4_name")"
@@ -531,7 +537,7 @@ delete_obsolete_images() {
     warn "Found obsolete Images:"
     info "$OBSOLETE_IMAGES"
 
-    local ERROR_DELETE_OBSOLETE="$(docker rmi ${OBSOLETE_IMAGES} >/dev/null 2>&1)"
+    local ERROR_DELETE_OBSOLETE="$(docker rmi ${OBSOLETE_IMAGES} 2>&1 1>/dev/null)"
 
     [ -z "${ERROR_DELETE_OBSOLETE}" ] \
         && success "Obsolete images deleted." \
