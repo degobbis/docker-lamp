@@ -1,5 +1,5 @@
   mailcatcher:
-    image: mailhog/mailhog:latest
+    image: jcalonso/mailhog:latest
     container_name: ${COMPOSE_PROJECT_NAME}_mailcatcher
     restart: unless-stopped
     ports:

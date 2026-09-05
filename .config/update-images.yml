@@ -62,7 +62,7 @@ services:
     image: degobbis/mysql96:latest
 
   mailcatcher:
-    image: mailhog/mailhog:latest
+    image: jcalonso/mailhog:latest
 
   phpmyadmin:
     image: phpmyadmin:fpm-alpine

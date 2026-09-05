@@ -1,7 +1,6 @@
 # docker-lamp
 
-docker-lamp is a powerful collection of pre-built images, containers and scripts that use docker 
-and docker compose to automate the creation of LAMP environments with different settings. 
+docker-lamp is a powerful collection of pre-built images, containers and scripts that use docker and docker compose to automate the creation of LAMP environments with different settings. 
 
 When starting up docker-lamp it will: 
 - create different docker containers
