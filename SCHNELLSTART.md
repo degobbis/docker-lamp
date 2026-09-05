@@ -4,10 +4,29 @@ Docker LAMP richtet eine vollständige lokale Entwicklungsumgebung ein: PHP in v
 
 ## Voraussetzungen
 
-- Docker Engine (20.10+)
+- Docker Engine
 - Docker Compose Plugin
-- Bash Shell (WSL bei Windows)
-- Auf macOS: `brew install gnu-getopt && echo 'export PATH="$(brew --prefix)/opt/gnu-getopt/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc`
+- Bash Shell >= v4.0 (oder WSL bei Windows)
+- Auf Mac OSX: Homebrew, gnu-getopt
+
+### Vorbereitung auf Mac OSX
+**Installation von [Homebrew](https://brew.sh/de/):**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+**Installation von `bash` (falls < v4.0):**
+```bash
+brew install bash \
+    && echo 'export PATH="$(brew --prefix)/bin:$PATH"' >> ~/.zshrc \
+    && source ~/.zshrc
+```
+**Installation von `gnu-getopt`:**
+
+```bash
+brew install gnu-getopt \
+    && echo 'export PATH="$(brew --prefix)/opt/gnu-getopt/bin:$PATH"' >> ~/.zshrc \
+    && source ~/.zshrc
+```
 
 ---
 
@@ -19,7 +38,7 @@ Klone das Tool an einen zentralen Ort:
 
 ```bash
 sudo mkdir -p /opt/git
-sudo chown -R $USER:$USER /opt/git
+sudo chown -R $USER /opt/git
 cd /opt/git
 git clone https://github.com/degobbis/docker-lamp.git
 ```
@@ -90,8 +109,8 @@ Jede PHP-Version bekommt zwei Ports:
 
 | Scheme | HTTP | HTTPS |
 |--------|------|-------|
-|  PHP 5.6 | `http://localhost:8056` | `https://localhost:8456` |
-|  PHP 7.4 | `http://localhost:8074` | `https://localhost:8474` |
+| PHP 5.6 | `http://localhost:8056` | `https://localhost:8456` |
+| PHP 7.4 | `http://localhost:8074` | `https://localhost:8474` |
 | PHP 8.1 | `http://localhost:8081` | `https://localhost:8481` |
 | PHP 8.2 | `http://localhost:8082` | `https://localhost:8482` |
 | PHP 8.3 | `http://localhost:8083` | `https://localhost:8483` |
@@ -159,12 +178,12 @@ BIND startet einen lokalen DNS-Server, der `*.test` automatisch auflöst.
 ### Ohne BIND: manuell anpassen
 
 **Windows:** `C:\Windows\System32\drivers\etc\hosts` - Alternativ die [PowerToys](https://learn.microsoft.com/de-de/windows/powertoys/) von Microsoft.  
-**Linux/macOS:** `/etc/hosts`
+**Linux/Mac OSX:** `/etc/hosts`
 
 Die Dateien müssen als Administrator oder root bearbeitet werden.
 
 ```bash
-# /etc/hosts (oder ~/.hosts auf macOS)
+# /etc/hosts (oder ~/.hosts auf Mac OSX)
 127.0.0.1  joomla.test wp.test wpms.test subdomain.joomla.test
 ```
 
@@ -174,35 +193,45 @@ Die Dateien müssen als Administrator oder root bearbeitet werden.
 
 ## Netzwerkeinstellungen: DNS-Resolver
 
-Damit das Domain-Mapping auch dann funktioniert, wenn der BIND-Container läuft, muss dein Betriebssystem **die IP deines Rechners als DNS-Resolver vor dem Router** eintragen. BIND hört lokal, alle *.test-Anfragen werden beantwortet, alles andere an `DNS_FORWARDER` aus der `.env` durchgereicht. Dort kann z.B. die Router-IP hinterlegt werden.
+Damit das Domain-Mapping auch dann funktioniert, wenn der BIND-Container läuft, muss dein Betriebssystem **deinen Rechner als DNS-Resolver vor dem Router** verwenden. BIND hört lokal, alle `*.test` und `*.local` Anfragen werden beantwortet, alles andere an `DNS_FORWARDER` aus der `.env` durchgereicht. Dort kann z.B. die Router-IP hinterlegt werden.
 
-### Linux (NetworkManager / systemd-resolved)
+### Linux mit NetworkManager / systemd-resolved
 
-Setze in /etc/resolv.conf oder via nmcli die eigene IP als primären Nameserver:
-
+**TLD `.test` und `.local` abfangen :**  
+(systemd-resolved ist der standard bei modernen Distributionen)
 ```bash
-# Beispiel: Rechner-IP ist 192.168.0.100
-nameserver 192.168.0.100   # BIND-Container (lokaler Fallback)
-nameserver 192.168.0.1     # Router (Fallback für das Internet)
+sudo mkdir -p /etc/systemd/resolved.conf.d
+
+sudo tee /etc/systemd/resolved.conf.d/local-test-domains.conf > /dev/null <<EOF
+[Resolve]
+DNS=127.0.0.1:53
+Domains=~test ~local
+EOF
 ```
 
-> Bei systemd-resolved die Konfiguration unter /etc/systemd/resolved.conf vornehmen (DNS=192.168.0.100 und FallbackDNS=192.168.0.1).
+### Mac OSX mit mDNSResolver
 
-### macOS
+**TLD `.test` und `.local` abfangen:**
+```bash
+sudo tee /etc/resolver/test > /dev/null <<EOF
+nameserver 127.0.0.1
+port 53
+EOF
 
-Systemeinstellungen → Netzwerk → Erweitert → DNS:
-
-- **DNS-Server:** 127.0.0.1 (oder die IP des BIND-Containers) als **ersten** Eintrag
-- **Fallback:** Router-IP als zweiten Eintrag
+sudo tee /etc/resolver/local > /dev/null <<EOF
+nameserver 127.0.0.1
+port 53
+EOF
+```
 
 ### Windows
 
 Adapter-Optionen → IPv4 → Eigenschaften → DNS-Server:
 
-- **Bevorzugter DNS:** 127.0.0.1 (oder IP des BIND-Containers)
+- **Bevorzugter DNS:** 127.0.0.1
 - **Alternativer DNS:** Router-IP
 
-**Wichtig:** Ohne diesen Eintrag bleibt *.test unaufgelöst, da der Router die Domain nicht kennt. Der lokale BIND muss also **vor** dem Router stehen.
+**Wichtig:** Ohne diesen Eintrag bleibt `*.test` und `*.local` unaufgelöst, da der Router die Domain nicht kennt. Der lokale BIND muss also **vor** dem Router stehen.
 
 ---
 
