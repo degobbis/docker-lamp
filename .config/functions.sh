@@ -195,7 +195,7 @@ usage_cli() {
 error() {
     tput setaf 1
     tput bold
-    echo "ERROR:" "$@"
+    echo "ERROR:" "$@" >&2
     tput sgr 0
     tput bel
 }

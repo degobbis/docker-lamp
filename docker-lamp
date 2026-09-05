@@ -5,13 +5,25 @@ DEBUG="${DL_DEBUG:-0}"
 
 # Define the basedir for the docker compose.
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
-    DOCKER_LAMP_BASEDIR="$( cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 ; pwd -P )"
+    DOCKER_LAMP_BASEDIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1; pwd -P)"
 else
     DOCKER_LAMP_BASEDIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 fi
 
 # Load the functions for the script
-. $DOCKER_LAMP_BASEDIR/.config/functions.sh
+source "${DOCKER_LAMP_BASEDIR}/.config/functions.sh"
+
+# Test if bash version is >= 4
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+    error "Bash 4 or newer is required (found ${BASH_VERSION})."
+    exit 1
+fi
+
+# Test if gnu-getopt is installed
+if [[ "$(getopt -T >/dev/null 2>&1; echo $?)" -ne 4 ]]; then
+    error "GNU getopt is required but not installed."
+    exit 1
+fi
 
 headline "----------------------"
 log "DOCKER_LAMP_BASEDIR: $DOCKER_LAMP_BASEDIR"
@@ -28,12 +40,18 @@ if [[ "$(docker info >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
 fi
 
 # If called without command, return help and exit.
-[ "$#" -eq 0 ] && usage | more -d && exit 0
+if [[ "$#" -eq 0 ]]; then
+    usage | more -d
+    exit 0
+fi
 
 # Define the basedir for the .env file
 ENV_FILE_BASEDIR="$(pwd)"
 
-[ ! -w "${ENV_FILE_BASEDIR}" ] && error "No write permissions for '$ENV_FILE_BASEDIR'" && exit 1
+if [[ ! -w "${ENV_FILE_BASEDIR}" ]]; then
+    error "No write permissions for '$ENV_FILE_BASEDIR'"
+    exit 1
+fi
 
 ENV_FILE="${ENV_FILE_BASEDIR}/.env"
 
@@ -43,15 +61,17 @@ log "ENV_FILE: $ENV_FILE"
 DL_SUBNET="172.50.0.0/24"
 REMOTE_HOST_IP="0.0.0.0"
 
-if [ -f "${ENV_FILE}" ]; then
-    ENV_FILE_LOADED="$(. ${ENV_FILE} 2>&1)"
+if [[ -f "${ENV_FILE}" ]]; then
+    ENV_FILE_LOADED="$(source "${ENV_FILE}" 2>&1)"
 
-    [ ! -z "${ENV_FILE_LOADED}" ] && error "Something is wrong in the '.env' file!" \
-        && warn "-> $ENV_FILE_LOADED" \
-        && exit 1
+    if [[ ! -z "${ENV_FILE_LOADED}" ]]; then
+        error "Something is wrong in the '.env' file!"
+        warn "-> $ENV_FILE_LOADED"
+        exit 1
+    fi
 
     # Load the user configuration
-    . ${ENV_FILE}
+    source "${ENV_FILE}"
 else
     error "No '.env' file found in '$ENV_FILE_BASEDIR'!"
     warn "Please copy '$DOCKER_LAMP_BASEDIR/.env-example' to '$ENV_FILE' and define Your preferred configuration,"
@@ -59,13 +79,13 @@ else
     exit 1
 fi
 
-if [ ! -z "${USE_SUBNET}" ]; then
+if [[ ! -z "${USE_SUBNET}" ]]; then
     DL_SUBNET="${USE_SUBNET}"
 fi
 
 # Fix for relative path on 'APP_BASEDIR'
 if [[ "$(command -v readlink >/dev/null 2>&1 ; echo $?)" -ne 0 ]]; then
-    NEW_APP_BASEDIR="$( cd -- "${APP_BASEDIR}" >/dev/null 2>&1 ; pwd -P )/$(basename "${APP_BASEDIR}")"
+    NEW_APP_BASEDIR="$(cd -- "${APP_BASEDIR}" >/dev/null 2>&1; pwd -P)/$(basename "${APP_BASEDIR}")"
 else
     NEW_APP_BASEDIR="$(readlink -f "${APP_BASEDIR}")"
 fi
@@ -73,7 +93,7 @@ fi
 log "APP_BASEDIR: $APP_BASEDIR"
 log "NEW_APP_BASEDIR: $NEW_APP_BASEDIR"
 
-if [ ! -d "${NEW_APP_BASEDIR}" ]; then
+if [[ ! -d "${NEW_APP_BASEDIR}" ]]; then
     warn "'APP_BASEDIR=$APP_BASEDIR' defined in '$ENV_FILE' would be resolved as '$NEW_APP_BASEDIR'"
     error "'$NEW_APP_BASEDIR' does not exists!"
     exit 1
@@ -95,13 +115,13 @@ case "$1" in
         usage | more -d && exit 0
         ;;
     restart|stop|create-certs|update-images|delete-obsolete-images)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
         ;;
     start)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -109,7 +129,7 @@ case "$1" in
         SHORT="p: H: m:"
         ;;
     shutdown)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -117,14 +137,14 @@ case "$1" in
         SHORT="f: a s"
         ;;
     restore-db)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         shift
         ARGUMENT="$1"
         shift
        ;;
     save-db)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         shift
         ARGUMENT="$1"
@@ -133,7 +153,7 @@ case "$1" in
         SHORT="f: a"
        ;;
     cli)
-        [ "$2" = "--help" ] && usage $1 | more -d && exit 0
+        [[ "$2" = "--help" ]] && usage "$1" | more -d && exit 0
         COMMAND="$1"
         ARGUMENT=""
         shift
@@ -142,23 +162,23 @@ case "$1" in
         _TMP=""
         while [ ! -z "$1" ]; do
             if [[ $1 == -* ]]; then
-                _TMP="$_TMP $1"
+                _TMP="${_TMP} $1"
             else
                 COMMAND_TO_PASS="$1"
             fi
             shift
         done
-        _TMP=$(echo "$_TMP" | xargs)
-        [ ! -z "$_TMP" ] && set -- $_TMP
+        _TMP=$(echo "${_TMP}" | xargs)
+        [[ ! -z "${_TMP}" ]] && set -- "${_TMP}"
         LONG="as-root xdebug"
         SHORT="r x"
         ;;
 esac
 
 # Load a hook file to override functions and interact with the commands befor start
-if [ -f "${APP_BASEDIR}/hooks/pre_start.sh" ]; then
-    . ${APP_BASEDIR}/hooks/pre_start.sh
-    if [ $? -eq 0 ]; then
+if [[ -f "${APP_BASEDIR}/hooks/pre_start.sh" ]]; then
+    source "${APP_BASEDIR}/hooks/pre_start.sh"
+    if [[ "$?" -eq 0 ]]; then
         log "Hook is loaded: ${APP_BASEDIR}/hooks/pre_start.sh"
     else
         warn "Something went wrong with the hook: ${APP_BASEDIR}/hooks/pre_start.sh"
@@ -175,36 +195,41 @@ log "COMMAND_TO_PASS: $COMMAND_TO_PASS"
 log "SHORT: $SHORT"
 log "LONG: $LONG"
 
-[ -z "${COMMAND}" ] && error "Wrong command!" && warn "For help call '$0 --help'." && exit 1
-
-if [ "${COMMAND}" = "start" ] \
-    && ([ -f "${DOCKER_COMPOSE_YAML}" ] && [ ! -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ]); then
-        error "Server is already running."
-        exit 1
+if [[ -z "${COMMAND}" ]]; then
+    error "Wrong command!"
+    warn "For help call '$0 --help'."
+    exit 1
 fi
 
-if [ "${COMMAND}" = "stop" ]; then
+if [[ "${COMMAND}" = "start" ]]; then
+    if [[ -f "${DOCKER_COMPOSE_YAML}" && ! -z "$(${DOCKER_COMPOSE_CALL} ps -q)" ]]; then
+        error "Server is already running."
+        exit 1
+    fi
+fi
+
+if [[ "${COMMAND}" = "stop" ]]; then
     stop_server
     exit 0
 fi
 
-if [ "${COMMAND}" = "create-certs" ]; then
+if [[ "${COMMAND}" = "create-certs" ]]; then
     create_certs
     exit 0
 fi
 
-if [ "${COMMAND}" = "update-images" ]; then
+if [[ "${COMMAND}" = "update-images" ]]; then
     update_images
     exit 0
 fi
 
-if [ "${COMMAND}" = "delete-obsolete-images" ]; then
+if [[ "${COMMAND}" = "delete-obsolete-images" ]]; then
     delete_obsolete_images
     exit 0
 fi
 
-if [ "${COMMAND}" = "restore-db" ]; then
-    restore_db ${ARGUMENT}
+if [[ "${COMMAND}" = "restore-db" ]]; then
+    restore_db "${ARGUMENT}"
     exit 0
 fi
 
@@ -215,13 +240,13 @@ log "\$2: $2"
 
 OPTIONS=$(getopt -q -o "${SHORT}" -l "${LONG}" -n "$0" -- "$@")
 
-if [ "$?" -eq 1 ]; then
+if [[ "$?" -eq 1 ]]; then
     error "The parameter" "$@" "is not set correctly!"
     warn "For help call '$0 --help'."
     exit 1
 fi
 
-log "\$OPTIONS: $OPTIONS"
+log "OPTIONS: $OPTIONS"
 
 eval set -- "${OPTIONS}"
 
@@ -244,7 +269,7 @@ while true; do
     log "--------------"
     log "Parameter: $1"
 
-    if [ -z "${CASE##*$1*}" ]; then
+    if [[ -z "${CASE##*$1*}" ]]; then
          case "$1" in
             -H | --httpd)
                 HTTPD_TO_USE="$2"
@@ -300,28 +325,28 @@ while true; do
     fi
 done
 
-if [ -n "$1" ]; then
+if [[ -n "$1" ]]; then
     error "The argument '$1' is not allowed at this place!"
     warn "For help call '$0 --help'."
     exit 1
 fi
 
-if [ "${COMMAND}" = "save-db" ]; then
-    save_db ${ARGUMENT}
+if [[ "${COMMAND}" = "save-db" ]]; then
+    save_db "${ARGUMENT}"
     exit 0
 fi
 
-if [ "${COMMAND}" = "cli" ]; then
+if [[ "${COMMAND}" = "cli" ]]; then
     cli_container
     exit 0
 fi
 
-if [ "${COMMAND}" = "shutdown" ]; then
+if [[ "${COMMAND}" = "shutdown" ]]; then
     shutdown_server
     exit 0
 fi
 
-PHP_TO_USE=$(echo "${PHP_TO_USE}" | sed "s/, / /g" | sed "s/,/ /g")
+PHP_TO_USE="$(echo "${PHP_TO_USE}" | sed "s/, / /g" | sed "s/,/ /g")"
 
 headline "after editing the parameters"
 log "\$@:" "$@"
@@ -330,7 +355,7 @@ log "HTTPD_TO_USE: $HTTPD_TO_USE"
 log "PHP_TO_USE: $PHP_TO_USE"
 log "USE_BIND: $USE_BIND"
 
-if [ ! -z "${MAP_PORT_80_443}" ]; then
+if [[ ! -z "${MAP_PORT_80_443}" ]]; then
     MAP_PORT_80="${MAP_PORT_80_443@U}_PORT"
     MAP_PORT_80="${!MAP_PORT_80}"
     MAP_PORT_443="${MAP_PORT_80_443@U}_PORT_SSL"
@@ -360,12 +385,12 @@ HTTPD_SSL_PORT_PHP85="8485"
 HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${PMA_PORT}:8000 ${PMA_SSL_PORT}:8400"
 
 # Sort databases and remove duplicates
-DATABASE_TO_USE="$(echo $(echo ${DATABASE_TO_USE} | tr ' ' '\n' | sort -u | tr '\n' ' '))"
+DATABASE_TO_USE="$(echo "${DATABASE_TO_USE}" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 # Define the database volumes (one for each)
-export DATABASE_VOLUMES=$(get_yaml_volumes "${DATABASE_TO_USE}")
+export DATABASE_VOLUMES="$(get_yaml_volumes "${DATABASE_TO_USE}")"
 
 # Define the LOAD_YAML variable with the base YAML-Config
-add_yaml_to_load base
+add_yaml_to_load "base"
 
 #
 # Set phpMyAdmin multiple hosts
@@ -373,19 +398,19 @@ add_yaml_to_load base
 PMA_DB_HOSTS="${DATABASE_TO_USE// /,}"
 
 # Add phpmyadmin YAML-Config to LOAD_YAML
-add_yaml_to_load phpmyadmin
+add_yaml_to_load "phpmyadmin"
 HTTPD_LINKS_LIST="phpmyadmin"
 
 # Add mailcatcher YAML-Config to LOAD_YAML
-if [ "${USE_MAILCATCHER}" -eq 1 ]; then
-    add_yaml_to_load mailcatcher
+if [[ "${USE_MAILCATCHER}" -eq 1 ]]; then
+    add_yaml_to_load "mailcatcher"
 fi
 
 # Add BIND support, if not disabled
 INIT_DL_BIND=""
-add_yaml_to_load bind
+add_yaml_to_load "bind"
 
-if [ "$USE_BIND" -eq 1 ]; then
+if [[ "$USE_BIND" -eq 1 ]]; then
     INIT_DL_BIND="--scale bind=1"
 fi
 
@@ -396,7 +421,7 @@ for var in ${PHP_TO_USE}; do
     HTTPD_PHP_SSL_PORT="HTTPD_SSL_PORT_${var@U}"
 
     # Add php versions YAML-Config to LOAD_YAML
-    add_yaml_to_load php/${var}
+    add_yaml_to_load "php/${var}"
 
     # Define the ports to map into the HTTPD container
     HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${!PHP_PORT}:${!HTTPD_PHP_PORT} ${!PHP_SSL_PORT}:${!HTTPD_PHP_SSL_PORT}"
@@ -406,50 +431,50 @@ done
 HTTPD_LINKS_LIST="${HTTPD_LINKS_LIST} ${PHP_TO_USE}"
 
 # Exdend the ports list of the HTTPD container with the custom ports defined
-[ ! -z "${HTTPD_CUSTOM_PORTS}" ] && HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${HTTPD_CUSTOM_PORTS}"
+[[ ! -z "${HTTPD_CUSTOM_PORTS}" ]] && HTTPD_PORTS_LIST="${HTTPD_PORTS_LIST} ${HTTPD_CUSTOM_PORTS}"
 
 # Add database YAML-Config to LOAD_YAML
-NUM_DATABASES_TO_USE=$(c() { echo $#; }; c ${DATABASE_TO_USE})
+NUM_DATABASES_TO_USE=$(c() { echo $#; }; c "${DATABASE_TO_USE}")
 log "NUM_DATABASES_TO_USE: $NUM_DATABASES_TO_USE"
 
-if [ "${NUM_DATABASES_TO_USE}" -ge 1 ]; then
+if [[ "${NUM_DATABASES_TO_USE}" -ge 1 ]]; then
   for var in ${DATABASE_TO_USE}; do
-    if [ -z "${DATABASE_DEFAULT}" ]; then
+    if [[ -z "${DATABASE_DEFAULT}" ]]; then
         DATABASE_DEFAULT="${var}"
     fi
 
     # With multiple databases, the host name is the database name
     host_name="${var@U}_HOST_NAME"
-    declare -g ${host_name}="${var}"
+    declare -g "${host_name}"="${var}"
 
     # With multiple databases, the database port is expected to be defined in the .env file
     port_name="${var@U}_PORT"
 
     # Each database get his own volume with the database name
     volume_name="${var@U}_DATA_VOLUME"
-    declare -g ${volume_name}="${var}"
+    declare -g "${volume_name}"="${var}"
 
     # Declare the database name as hostname
     hostname_aliases="${var@U}_ALIASES"
-    declare -g ${hostname_aliases}="$(get_yaml_aliases "${var}")"
+    declare -g "${hostname_aliases}"="$(get_yaml_aliases "${var}")"
 
     # Add "mysql" as hostname alias for the default database
     is_default_db=""
-    if [ "${var}" == "${DATABASE_DEFAULT}" ]; then
-        declare -g ${hostname_aliases}="$(get_yaml_aliases "${var} mysql")"
+    if [[ "${var}" == "${DATABASE_DEFAULT}" ]]; then
+        declare -g "${hostname_aliases}"="$(get_yaml_aliases "${var} mysql")"
         is_default_db=" (for this database also \"mysql:3306\" is possible)"
     fi
 
     # Each database get his own dump directory in "initDB"
     initdb_name="${var@U}_DUMP_DIR"
-    declare -g ${initdb_name}="initDB/${var}"
+    declare -g "${initdb_name}"="initDB/${var}"
 
     info ""
     success "The database \"${var}\" can be used as followed:"
     info " - Inside the docker-lamp with \"${var}:3306\"${is_default_db}"
     info " - Outside the docker-lamp with localhost:${!port_name}"
 
-    add_yaml_to_load db/$var
+    add_yaml_to_load "db/${var}"
   done
 else
     warn "There is no database defined in .env!"
@@ -460,9 +485,9 @@ echo
 log "HTTPD_PORTS_LIST: $HTTPD_PORTS_LIST"
 log "HTTPD_LINKS_LIST: $HTTPD_LINKS_LIST"
 
-export HTTPD_PORTS=$(get_yaml_list "$HTTPD_PORTS_LIST")
-export HTTPD_LINKS=$(get_yaml_list "$HTTPD_LINKS_LIST")
-export DATABASE_LINKS=$(get_yaml_list "$DATABASE_TO_USE")
+export HTTPD_PORTS="$(get_yaml_list "${HTTPD_PORTS_LIST}")"
+export HTTPD_LINKS="$(get_yaml_list "${HTTPD_LINKS_LIST}")"
+export DATABASE_LINKS="$(get_yaml_list "${DATABASE_TO_USE}")"
 
 echo
 log "HTTPD_PORTS: $HTTPD_PORTS"
@@ -473,25 +498,25 @@ log "APP_BASEDIR: $APP_BASEDIR"
 log "LOAD_YAML: $LOAD_YAML"
 
 # Add HTTPD YAML-Config to LOAD_YAML
-add_yaml_to_load httpd/$HTTPD_TO_USE
+add_yaml_to_load "httpd/$HTTPD_TO_USE"
 
-[ -f "$DOCKER_COMPOSE_YAML" ] && rm -f $DOCKER_COMPOSE_YAML
-( echo "cat <<EOF > $ENV_FILE_BASEDIR/compose.yml";
-  cat $LOAD_YAML;
+[[ -f "${DOCKER_COMPOSE_YAML}" ]] && rm -f "${DOCKER_COMPOSE_YAML}"
+( echo "cat <<EOF > ${ENV_FILE_BASEDIR}/compose.yml";
+  cat ${LOAD_YAML};
   echo "EOF";
-) > $ENV_FILE_BASEDIR/temp.yml
-. $ENV_FILE_BASEDIR/temp.yml
-rm -f $ENV_FILE_BASEDIR/temp.yml
+) > "${ENV_FILE_BASEDIR}/temp.yml"
+source "${ENV_FILE_BASEDIR}/temp.yml"
+rm -f "${ENV_FILE_BASEDIR}/temp.yml"
 
 
 #exit 1
 
-if [ "$COMMAND" = "restart" ]; then
+if [[ "${COMMAND}" = "restart" ]]; then
     restart_server
     exit 0
 fi
 
-if [ "$COMMAND" = "start" ]; then
+if [[ "${COMMAND}" = "start" ]]; then
     start_server
     exit 0
 fi
