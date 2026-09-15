@@ -136,7 +136,7 @@ https://joomla.test:8482/
 | App | URL |
 |--------|------|
 | phpMyAdmin | `http://localhost:8000` oder `https://localhost:8400` |
-| Mailcatcher | `http://localhost:8025` |
+| Mailcatcher (Mailhog) | `http://localhost:8025` |
 
 **Hinweis:** Die Ports `8000` und `8400` für `phpMyAdmin` und `8025` für den Mailcatcher können in der `.env` angepasst werden.
 

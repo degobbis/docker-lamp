@@ -17,6 +17,7 @@
 
 # IDEs
 .idea
+.zed
 
 # MacOS
 .DS_Store
